@@ -1,6 +1,7 @@
 import assert = require('assert');
 
 import { Enveloper } from '../../../models/enveloper';
+import { Configuration } from '../../../models/configuration';
 
 suite('Enveloper', () => {
 
@@ -79,7 +80,8 @@ suite('Enveloper', () => {
   <Data Name="CommandLine">"C:\\Windows\\system32\\mmc.exe" "C:\\Windows\\system32\\eventvwr.msc" /s</Data> 
   </EventData>
   </Event>`;
-    const envelopedEvents = Enveloper.addEnvelope(events, "application/x-pt-eventlog");
+		const enveloper = new Enveloper(Configuration.get());
+		const envelopedEvents = enveloper.addEnvelope(events, "application/x-pt-eventlog");
 
 		assert.strictEqual(envelopedEvents.length, 2);
 		const json1 = JSON.parse(envelopedEvents[0]);
@@ -127,8 +129,8 @@ suite('Enveloper', () => {
   <Data Name="MandatoryLabel">S-1-16-12288</Data> 
   </EventData>
   </Event>`;
-
-		const envelopedEvents = Enveloper.addEnvelope(events, "application/x-pt-eventlog");
+		const enveloper = new Enveloper(Configuration.get());
+		const envelopedEvents = enveloper.addEnvelope(events, "application/x-pt-eventlog");
 
 		assert.strictEqual(envelopedEvents.length, 2);
 		const json1 = JSON.parse(envelopedEvents[0]);
@@ -247,8 +249,8 @@ suite('Enveloper', () => {
 </EventData>
 </Event>
 `;
-
-		const envelopedEvents = Enveloper.addEnvelope(xmlEvent, "application/x-pt-eventlog");
+		const enveloper = new Enveloper(Configuration.get());
+		const envelopedEvents = enveloper.addEnvelope(xmlEvent, "application/x-pt-eventlog");
 
 		assert.strictEqual(envelopedEvents.length, 3);
 		const envelopedEvent = JSON.parse(envelopedEvents[0]);
@@ -296,8 +298,8 @@ suite('Enveloper', () => {
   <Data Name="AdditionalInfo2">root\\cimv2\\Security\\MicrosoftVolumeEncryption</Data>
 </EventData>
 </Event>`;
-
-		const envelopedEvents = Enveloper.addEnvelope(xmlEvent, "application/x-pt-eventlog");
+		const enveloper = new Enveloper(Configuration.get());
+		const envelopedEvents = enveloper.addEnvelope(xmlEvent, "application/x-pt-eventlog");
 
 		assert.strictEqual(envelopedEvents.length, 1);
 		const envelopedEvent = JSON.parse(envelopedEvents[0]);
@@ -345,8 +347,8 @@ suite('Enveloper', () => {
 	<Data Name="AdditionalInfo2">root\\cimv2\\Security\\MicrosoftVolumeEncryption</Data>
 </EventData>
 </Event>`;
-
-		const envelopedEvents = Enveloper.addEnvelope(xmlEvent, "application/x-pt-eventlog");
+		const enveloper = new Enveloper(Configuration.get());
+		const envelopedEvents = enveloper.addEnvelope(xmlEvent, "application/x-pt-eventlog");
 		assert.strictEqual(envelopedEvents.length, 1);
 
 		const envelopedEvent = JSON.parse(envelopedEvents[0]);

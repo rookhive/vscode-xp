@@ -38,7 +38,6 @@ import { UserSettingsManager as UserSettingsManager } from './models/content/use
 import { DefaultTLValuesEditorViewProvider } from './views/defaultTLValues/defaultTLValuesEditorViewProvider';
 import { LocalizationEditorViewProvider } from './views/localization/localizationEditorViewProvider';
 import { CommonCommands } from './models/command/commonCommands';
-import mainPackageFile from '../../package.json';
 import { ToolsManager } from './models/content/toolsManager';
 
 export let Log: Logger;
@@ -49,8 +48,19 @@ export async function activate(context: ExtensionContext): Promise<void> {
 	try {
 		// Инициализация реестр глобальных параметров.
 		const config = await Configuration.init(context);
+
+		let extensionVersion;
+		try {
+			const packageFilePath = path.resolve(__dirname, '../../package.json');
+			const packageFileContent = await FileSystemHelper.readContentFile(packageFilePath);
+			extensionVersion = JSON.parse(packageFileContent).version;
+		}
+		catch (error) {
+			Log.warn(`Failed to get the extension version`, error);
+		}
+
 		Log = Logger.init(config);
-		Log.info(`Extension activation ${mainPackageFile.version} has started '${Configuration.getExtensionDisplayName()}'`);
+		Log.info(`Extension activation ${extensionVersion ?? ''} has started '${Configuration.getExtensionDisplayName()}'`);
 
 		// Информация по ОС
 		Log.info(`OS Platform: ${os.platform()}`);
