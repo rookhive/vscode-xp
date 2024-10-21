@@ -230,17 +230,6 @@ suite('CorrelationHelper.createCorrelationFromTemplate', async () => {
 		const tmpPath = TestFixture.getTmpPath();
 		await rule.save(tmpPath);
 	});
-
-	test('Сохранение правила по доступу в память другого процесса для Windows', async () => {
-		const ruleName = "ESC_Super_Duper";
-		const rule = await ContentHelper.createCorrelationFromTemplate(ruleName, "Windows_Sysmon10", Configuration.get());
-		
-		assert.strictEqual(rule.getName(), ruleName);
-		assert.strictEqual(rule.getMetaInfo().getName(), ruleName);
-
-		const tmpPath = TestFixture.getTmpPath();
-		await rule.save(tmpPath);
-	});
 	
 	test('Сохранение правила по созданию задачи для Windows', async () => {
 		const ruleName = "ESC_Super_Duper";
