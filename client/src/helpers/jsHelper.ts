@@ -50,4 +50,28 @@ export class JsHelper {
 			return obj;
 		}, {});
 	}
+
+	/**
+	 * Возвращает глубокую копию объекта с отсортированными в соотсветствии со
+	 * схемой полями на корневом уровне вложенности
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public static sortRootKeysAccordingToSchema<T extends Record<string, any>>(
+		object: T,
+		schema: string[]
+	): T {
+		const shallowCopiedObject = { ...object };
+		const sortedObject = Object.assign(
+			schema.reduce((result, field) => {
+				if (Object.prototype.hasOwnProperty.call(shallowCopiedObject, field)) {
+					result[field] = shallowCopiedObject[field];
+					delete shallowCopiedObject[field];
+				}
+				return result;
+			}, {}),
+			shallowCopiedObject
+		);
+
+		return structuredClone(sortedObject);
+	}
 }

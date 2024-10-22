@@ -220,9 +220,11 @@ export class SaveTableListCommand implements TableListCommand {
 	}
 
 	protected async saveTableList(tableObject: TableView) : Promise<void> {
+		const schema = ['name', 'type'];
+		const sortedObject = JsHelper.sortRootKeysAccordingToSchema(tableObject, schema);
 
 		// Сохраняем в YAML
-		const resultYamlTable = YamlHelper.tableStringify(tableObject);
+		const resultYamlTable = YamlHelper.tableStringify(sortedObject);
 		await this._newTable.setRuleCode(resultYamlTable);
 		return this._newTable.save();
 	}
