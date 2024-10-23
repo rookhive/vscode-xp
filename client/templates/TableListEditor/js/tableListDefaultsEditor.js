@@ -7,6 +7,18 @@ let currentGrid = null;
 let currentRowIndex = null;
 
 (function () {
+    const store = (() => {
+        const state = {};
+
+        return {
+            getState() {
+                return state;
+            },
+            setState(nextState) {
+                Object.assign(state, nextState);
+            }
+        }
+    })();
 
     var addNewLOCButton = document.getElementById("add-loc-value-button");
     var addNewPTButton = document.getElementById("add-pt-value-button");
@@ -16,11 +28,18 @@ let currentRowIndex = null;
     highlightErrorsButton.disabled = false;
     updateFileButton.disabled = true;
 
-    addNewLOCButton.onclick = () => {
+    updateFileButton.onclick = () => {
+        const { fieldsData } = store.getState();
+
+        if (!fieldsData) {
+            return;
+        }
+
         vscode.postMessage({
-            type: 'add_loc'
+            type: 'update_file',
+            json: JSON.stringify(fieldsData)
         });
-    }; 
+    };
 
     addNewLOCButton.onclick = () => {
         vscode.postMessage({
@@ -185,11 +204,8 @@ let currentRowIndex = null;
 					return;
 				}
                 if (currentRowData) {
-                    const index = currentGrid.rowsData.indexOf(currentRowData);
-                    if (index > -1) {
-                        currentGrid.rowsData.splice(index, 1);
-                        refreshResxData();
-                    }
+                    currentGrid.rowsData = currentGrid.rowsData.filter((rowData) => rowData !== currentRowData);
+                    refreshResxData();
                 }
                 else {
                     vscode.postMessage({
@@ -206,7 +222,7 @@ let currentRowIndex = null;
 					obj[values[i]] = "-"
 				}
 				// eslint-disable-next-line @typescript-eslint/naming-convention
-				loc_grid.rowsData.unshift(obj);
+				loc_grid.rowsData = [obj, ...loc_grid.rowsData];
 				refreshResxData();
                 return;
 			}
@@ -218,7 +234,7 @@ let currentRowIndex = null;
 					obj[values[i]] = "-"
 				}
 				// eslint-disable-next-line @typescript-eslint/naming-convention
-				pt_grid.rowsData.unshift(obj);
+				pt_grid.rowsData = [obj, ...pt_grid.rowsData];
 				refreshResxData();
                 return;
 			}
@@ -309,9 +325,17 @@ let currentRowIndex = null;
         //} 
     }
 
-    function refreshResxData(highlight=false) {
+    function refreshResxData() {
+        requestAnimationFrame(_refreshResxData);
+    }
+
+    function _refreshResxData(highlight=true) {
         var updateFileButton = document.getElementById("update-file-button");
         updateFileButton.disabled = false;
+
+        loc_grid.rowElements.forEach((rowElement) => {
+            rowElement.style.minHeight = '28px';
+        });
 
         var obj = {'loc':[], 'pt': [],};
         for (var i = 0; i < loc_grid.rowsData.length; i++) {
@@ -326,10 +350,10 @@ let currentRowIndex = null;
             { 
                 updateFileButton.disabled = true;
                 if(highlight)
-                {loc_grid._rowElements[i+1]._cellElements.forEach((cell) => cell.style.backgroundColor = "#381010");}
+                {loc_grid.rowElements[i+1].cellElements.forEach((cell) => cell.style.backgroundColor = "#381010");}
             }
             else{
-                loc_grid._rowElements[i+1]._cellElements.forEach((cell) => cell.style.backgroundColor = "");
+                loc_grid.rowElements[i+1].cellElements.forEach((cell) => cell.style.backgroundColor = "");
             }
             obj['loc'].push(loc_grid.rowsData[i]);
         }
@@ -346,14 +370,15 @@ let currentRowIndex = null;
             { 
                 updateFileButton.disabled = true;
                 if (highlight)
-                {pt_grid._rowElements[i+1]._cellElements.forEach((cell) => cell.style.backgroundColor = "#381010");}
+                 {pt_grid.rowElements[i+1].cellElements.forEach((cell) => cell.style.backgroundColor = "#381010");}
             }
             else {
-                pt_grid._rowElements[i+1]._cellElements.forEach((cell) => cell.style.backgroundColor = "") 
+                pt_grid.rowElements[i+1].cellElements.forEach((cell) => cell.style.backgroundColor = "")
             }
             obj['pt'].push(pt_grid.rowsData[i]);
         }
 
+        store.setState({ fieldsData: obj })
         vscode.setState({ text: JSON.stringify(obj) });
 
         if (!updateFileButton.disabled){
@@ -375,10 +400,10 @@ let currentRowIndex = null;
             });
         
             if (!checkFields(loc_grid.rowsData[i])) { 
-                loc_grid._rowElements[i+1]._cellElements.forEach((cell) => cell.style.backgroundColor = "#381010");
+                loc_grid.rowElements[i+1].cellElements.forEach((cell) => cell.style.backgroundColor = "#381010");
             }
             else{
-                loc_grid._rowElements[i+1]._cellElements.forEach((cell) => cell.style.backgroundColor = "");
+                loc_grid.rowElements[i+1].cellElements.forEach((cell) => cell.style.backgroundColor = "");
             }
         }
             
@@ -390,10 +415,10 @@ let currentRowIndex = null;
                     }
             });
             if (!checkFields(pt_grid.rowsData[i])) { 
-                pt_grid._rowElements[i+1]._cellElements.forEach((cell) => cell.style.backgroundColor = "#381010");
+                pt_grid.rowElements[i+1].cellElements.forEach((cell) => cell.style.backgroundColor = "#381010");
             }
             else {
-                pt_grid._rowElements[i+1]._cellElements.forEach((cell) => cell.style.backgroundColor = "") 
+                pt_grid.rowElements[i+1].cellElements.forEach((cell) => cell.style.backgroundColor = "")
             }
         }
     }
@@ -411,6 +436,11 @@ let currentRowIndex = null;
 
     function getDict(array){
         var temp = {};
+
+        if (!array?.[Symbol.iterator]) {
+            return temp;
+        }
+
         for (var o of array) {
             temp = {...temp, ...o};
         }
@@ -461,6 +491,12 @@ let currentRowIndex = null;
 
             pt_grid.rowsData = ptValues;
 
+            store.setState({
+                fieldsData: {
+                    loc: locValues,
+                    pt: ptValues
+                }
+            });
         }
         else {
             console.log("text is null");
