@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable no-undef */
 const { build } = require("esbuild");
+const { clean } = require("esbuild-plugin-clean");
 
 const baseConfig = {
 	bundle: true,
@@ -9,14 +10,20 @@ const baseConfig = {
 	sourcemap: process.env.NODE_ENV !== "production",
 };
 
+const clientOutDirectoryPath = "./client/out";
 const clientConfig = {
 	...baseConfig,
 	platform: "node",
 	mainFields: ["module", "main"],
 	format: "cjs",
 	entryPoints: ["./client/src/extension.ts"],
-	outfile: "./client/out/extension.js",
+	outfile: `${clientOutDirectoryPath}/extension.js`,
 	external: ["vscode"],
+	plugins: [
+		clean({
+			patterns: [clientOutDirectoryPath]
+		})
+	]
 };
 
 const uiConfig = {
