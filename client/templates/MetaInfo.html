@@ -80,14 +80,13 @@
 				<td>
 					{{#Usecases}}
 					<div>
-						<input name="usecase" type="text" value="{{.}}" title="{{.}}" required>
+						<div class="multiline-input" name="usecase" type="text" data-value="{{.}}" contenteditable="plaintext-only"></div>
 						<input class="delete" type="button" value="-" title="-" onclick="deleteValue(this)">
 					</div>
 					{{/Usecases}}
-					<input class="add_value" type="button" value="+" onclick="addValue(this, 'usecase')">
+					<input class="add_value" type="button" value="+" onclick="addMultilineValue(this, 'usecase')">
 				</td>
 			</tr>
-
 
 			<tr>
 				<td class="labels">{{Localization.Falsepositives}}</td>
