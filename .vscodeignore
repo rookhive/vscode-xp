@@ -20,3 +20,11 @@
 !client/out/**/*.js
 !server/out/**/*.js
 !out/**/*.js
+
+!client/templates/*.html
+!client/templates/js/**
+!client/templates/shared/**
+!client/templates/styles/**
+!client/templates/TableListEditor/**
+!client/templates/UnitTestEditor/*
+!client/templates/UnitTestEditor/react-unit-test-editor/build/**
