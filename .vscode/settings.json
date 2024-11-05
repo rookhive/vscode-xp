@@ -1,9 +1,9 @@
 {
-	"editor.insertSpaces": false,
-	"tslint.enable": true,
-	"typescript.tsc.autoDetect": "off",
-	"typescript.preferences.quoteStyle": "single",
-	"editor.codeActionsOnSave": {
-		"source.fixAll.eslint": "explicit"
-	}
+  "typescript.tsc.autoDetect": "off",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "[typescript][typescriptreact][scss]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }

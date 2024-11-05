@@ -1,4 +1,4 @@
-import assert = require('assert');
+import assert from 'assert';
 import { Enveloper } from '../../../models/enveloper';
 import { Configuration } from '../../../models/configuration';
 

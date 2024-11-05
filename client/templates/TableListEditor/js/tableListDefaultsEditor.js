@@ -221,7 +221,6 @@ let currentRowIndex = null;
 				for (var i = 0; i < values.length; i++){
 					obj[values[i]] = "-"
 				}
-				// eslint-disable-next-line @typescript-eslint/naming-convention
 				loc_grid.rowsData = [obj, ...loc_grid.rowsData];
 				refreshResxData();
                 return;
@@ -233,7 +232,6 @@ let currentRowIndex = null;
 				for (var i = 0; i < values.length; i++){
 					obj[values[i]] = "-"
 				}
-				// eslint-disable-next-line @typescript-eslint/naming-convention
 				pt_grid.rowsData = [obj, ...pt_grid.rowsData];
 				refreshResxData();
                 return;
@@ -468,7 +466,6 @@ let currentRowIndex = null;
             for (const node in json['loc']  || []) {
                 if (node) {
                     let res = json['loc'][node];
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
                     locValues.push(res);
                 }
                 else {
@@ -481,7 +478,6 @@ let currentRowIndex = null;
             for (const node in json['pt']  || []) {
                 if (node) {
                     let res = json['pt'][node];
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
                     ptValues.push(res);
                 }
                 else {

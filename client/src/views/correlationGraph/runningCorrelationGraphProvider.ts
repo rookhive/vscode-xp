@@ -206,7 +206,7 @@ export class RunningCorrelationGraphProvider {
 
     // TODO: вынести в общий класс для всех вьюшек.
     public static TEXTAREA_END_OF_LINE = "\n";
-    public static RAW_EVENTS_FILENAME = "raw_events.json"
+    public static RAW_EVENTS_FILENAME = "raw_events.json";
     
     private view: vscode.WebviewPanel;
 }

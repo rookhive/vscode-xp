@@ -11,7 +11,7 @@ import { WebViewCommand } from '../webViewCommands';
 import { FileSystemHelper } from '../../helpers/fileSystemHelper';
 import { ExecutionResult, ProcessHelper } from '../../helpers/processHelper';
 import { Log } from '../../extension';
-import moment = require('moment');
+import moment from 'moment';
 
 import { OsType } from '../../models/locator/pathLocator';
 import { DateHelper } from '../../helpers/dateHelper';

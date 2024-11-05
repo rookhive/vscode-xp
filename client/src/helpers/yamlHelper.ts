@@ -1,5 +1,5 @@
 import * as js_yaml from 'js-yaml';
-import * as prettier from 'prettier';
+import * as prettier from "@prettier/sync";
 import * as os from 'os';
 
 export class YamlHelper {
