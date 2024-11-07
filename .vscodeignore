@@ -26,5 +26,7 @@
 !client/templates/shared/**
 !client/templates/styles/**
 !client/templates/TableListEditor/**
-!client/templates/UnitTestEditor/*
-!client/templates/UnitTestEditor/react-unit-test-editor/build/**
+
+!client/webview/out/**
+!client/webview/node_modules/monaco-editor/min/vs/**
+!client/webview/node_modules/@vscode/codicons/dist

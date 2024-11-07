@@ -7,201 +7,206 @@ import { TableView } from '../tableListsEditor/commands/tableListCommandBase';
 import { FileSystemHelper } from '../../helpers/fileSystemHelper';
 
 export class DefaultTLValuesEditorViewProvider implements vscode.CustomTextEditorProvider {
+  public static register(
+    context: vscode.ExtensionContext,
+    templatePath: string,
+    config: Configuration
+  ): vscode.Disposable {
+    const provider = new DefaultTLValuesEditorViewProvider(context, templatePath, config);
+    const providerRegistration = vscode.window.registerCustomEditorProvider(
+      DefaultTLValuesEditorViewProvider.viewType,
+      provider,
+      {
+        webviewOptions: {
+          enableFindWidget: true
+        }
+      }
+    );
 
-	public static register(context: vscode.ExtensionContext, templatePath: string, config: Configuration): vscode.Disposable {
-		const provider = new DefaultTLValuesEditorViewProvider(context, templatePath, config);
-		const providerRegistration = vscode.window.registerCustomEditorProvider(
-			DefaultTLValuesEditorViewProvider.viewType, provider, {
-				webviewOptions : {
-					enableFindWidget: true
-				}
-			}
-		);
-		
-		return providerRegistration;
-	}
+    return providerRegistration;
+  }
 
-	public static readonly viewType = "xp.default-tl-value-editor";
-	private registered = false;
-	private currentPanel: vscode.WebviewPanel | undefined = undefined;
+  public static readonly viewType = 'xp.default-tl-value-editor';
+  private registered = false;
+  private currentPanel: vscode.WebviewPanel | undefined = undefined;
 
-	constructor(
-		private readonly context: vscode.ExtensionContext,
-		private readonly _templatePath: string,
-		private readonly _config: Configuration
-	) { }
+  constructor(
+    private readonly context: vscode.ExtensionContext,
+    private readonly _templatePath: string,
+    private readonly _config: Configuration
+  ) {}
 
-	resolveCustomTextEditor(
-		document: vscode.TextDocument, 
-		webviewPanel: vscode.WebviewPanel, 
-		token: vscode.CancellationToken): void | Thenable<void> {
+  resolveCustomTextEditor(
+    document: vscode.TextDocument,
+    webviewPanel: vscode.WebviewPanel,
+    token: vscode.CancellationToken
+  ): void | Thenable<void> {
+    this.currentPanel = webviewPanel;
+    webviewPanel.webview.options = {
+      enableScripts: true,
+      localResourceRoots: [
+        vscode.Uri.joinPath(this.context.extensionUri, 'out'),
+        vscode.Uri.joinPath(
+          this.context.extensionUri,
+          'client',
+          'templates',
+          'TableListEditor',
+          'css'
+        )
+      ]
+    };
+    webviewPanel.webview.html = this._getWebviewContent(webviewPanel.webview);
+    webviewPanel.onDidChangeViewState((e) => {
+      this.currentPanel = e.webviewPanel;
+    });
 
-		this.currentPanel = webviewPanel;
-		webviewPanel.webview.options = {
-			enableScripts: true,
-			localResourceRoots: [
-				vscode.Uri.joinPath(this.context.extensionUri, 'out'),
-				vscode.Uri.joinPath(this.context.extensionUri, "client", "templates", "TableListEditor", "css")
-			]
-		};
-		webviewPanel.webview.html = this._getWebviewContent(webviewPanel.webview);
-		webviewPanel.onDidChangeViewState(e => {
-			this.currentPanel = e.webviewPanel;
-		});
-	
-		try {
-			if (!this.registered) {
-				this.registered = true;
-				const deleteCommand = vscode.commands.registerCommand("xp.DeleteTLRowCommand", () => {
-						this.currentPanel?.webview.postMessage({
-						type: 'delete'
-					});
-				});
-		
-				const addLOCCommand = vscode.commands.registerCommand("xp.AddLOCTLRowCommand", () => {	
-					this.currentPanel?.webview.postMessage({
-						type: 'add_loc'
-					});
-				});
+    try {
+      if (!this.registered) {
+        this.registered = true;
+        const deleteCommand = vscode.commands.registerCommand('xp.DeleteTLRowCommand', () => {
+          this.currentPanel?.webview.postMessage({
+            type: 'delete'
+          });
+        });
 
-				const addPTCommand = vscode.commands.registerCommand("xp.AddPTTLRowCommand", () => {	
-					this.currentPanel?.webview.postMessage({
-						type: 'add_pt'
-					});
-				});
-				
-				this.context.subscriptions.push(deleteCommand);
-				this.context.subscriptions.push(addLOCCommand);
-				this.context.subscriptions.push(addPTCommand);
-			}
-		}
-		catch (e) {
-			console.log(e);
-		}
+        const addLOCCommand = vscode.commands.registerCommand('xp.AddLOCTLRowCommand', () => {
+          this.currentPanel?.webview.postMessage({
+            type: 'add_loc'
+          });
+        });
 
-		function getFields(object) {
-			return object['fields'].map((f) => (Object.keys(f)[0])).filter((f) => (f != 'complex_key'));
-		}
-	
-		async function updateWebview() {
-			const json = JSON.parse(YamlHelper.yamlToJson(document.getText()));
+        const addPTCommand = vscode.commands.registerCommand('xp.AddPTTLRowCommand', () => {
+          this.currentPanel?.webview.postMessage({
+            type: 'add_pt'
+          });
+        });
 
-			const data = {'fields': json['fields'].filter(f => f !== "complex_key"), 'loc':[], 'pt': [],};
+        this.context.subscriptions.push(deleteCommand);
+        this.context.subscriptions.push(addLOCCommand);
+        this.context.subscriptions.push(addPTCommand);
+      }
+    } catch (e) {
+      console.log(e);
+    }
 
-			data['loc'] = json['defaults']['LOC'];
-			data['pt']  = json['defaults']['PT'];
+    function getFields(object) {
+      return object['fields'].map((f) => Object.keys(f)[0]).filter((f) => f != 'complex_key');
+    }
 
-			webviewPanel.webview.postMessage({
-				type: 'update_view',
-				text: JSON.stringify(data)
-			});
-		}
-	
-		// const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
-		// 	if (e.document.uri.toString() === document.uri.toString()) {
-		// 		updateWebview();
-		// 	}
-		// });
-	
-		// webviewPanel.onDidDispose(() => {
-		// 	changeDocumentSubscription.dispose();
-		// });
-	
-		webviewPanel.webview.onDidReceiveMessage(e => {
-			switch (e.type) {
-			case 'update_file':
-				{
-					const data : TableView = YamlHelper.parse(document.getText());
-					const yaml = YamlHelper.parse(YamlHelper.jsonToYaml(e.json));
+    async function updateWebview() {
+      const json = JSON.parse(YamlHelper.yamlToJson(document.getText()));
 
-					if(yaml.loc.length != 0){
-						// это костыль чтобы сохранить разные отступы 
-						// в дефлотных значениях и остальном документе
-						data.defaults['LOC'] = '<LOC>';
-					} else {
-						// TODO: проверить, что LOC не пусто
-						delete data.defaults.LOC;
-					}
-					if (yaml.pt.length != 0) {
-						// это костыль чтобы сохранить разные отступы 
-						// в дефлотных значениях и остальном документе
-						data['defaults']['PT'] = '<PT>';
-					} else {
-						// TODO: проверить, что PT не пусто
-						delete data.defaults.PT;
-					}
-					let updatedTableFileContent =  YamlHelper.stringify(data, {'!!null': 'empty'});
-					
-					// это костыль чтобы сохранить разные отступы 
-					// в дефолтных значениях и остальном документе
-					const margin = '    ';
-					const loc = 
-						YamlHelper.stringify(yaml['loc'], {'!!null': 'empty'})
-						.split(os.EOL)
-						.filter(Boolean)
-						.map((l) => `${margin}${l}`)
-						.join(os.EOL);
-					updatedTableFileContent = updatedTableFileContent.replace('<LOC>', `${os.EOL}${loc}`);
+      const data = { fields: json['fields'].filter((f) => f !== 'complex_key'), loc: [], pt: [] };
 
-					const pt = 
-						YamlHelper.stringify(yaml['pt'], {'!!null': 'empty'})
-						.split(os.EOL)
-						.filter(Boolean)
-						.map((l) => `${margin}${l}`)
-						.join(os.EOL);
-					updatedTableFileContent = updatedTableFileContent.replace('<PT>', `${os.EOL}${pt}`);
-					
-					this.updateTextDocument(document, updatedTableFileContent);
-					return;
-				}
-			case 'info':
-				DialogHelper.showInfo(e.message);
-				return;
-			case 'error':
-				DialogHelper.showError(e.message);
-				return;
-			case 'refresh':
-				updateWebview();
-				return;
-			case 'add_loc':
-				vscode.commands.executeCommand("xp.AddLOCTLRowCommand");
-				return;
-			case 'add_pt':
-				vscode.commands.executeCommand("xp.AddPTTLRowCommand");
-				return;
-			}
-		});
-	
-		updateWebview();
-	}
+      data['loc'] = json['defaults']['LOC'];
+      data['pt'] = json['defaults']['PT'];
 
-	private async updateTextDocument(document: vscode.TextDocument, json: any) {
+      webviewPanel.webview.postMessage({
+        type: 'update_view',
+        text: JSON.stringify(data)
+      });
+    }
 
-		const edit = new vscode.WorkspaceEdit();
+    // const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
+    // 	if (e.document.uri.toString() === document.uri.toString()) {
+    // 		updateWebview();
+    // 	}
+    // });
 
-		edit.replace(
-			document.uri,
-			new vscode.Range(0, 0, document.lineCount, 0),
-			json);
-		return vscode.workspace.applyEdit(edit);
-	}
-	
+    // webviewPanel.onDidDispose(() => {
+    // 	changeDocumentSubscription.dispose();
+    // });
 
-	private getNonce() {
-		let text = "";
-		const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-		for (let i = 0; i < 32; i++) {
-			text += possible.charAt(Math.floor(Math.random() * possible.length));
-		}
-		return text;
-	}
+    webviewPanel.webview.onDidReceiveMessage((e) => {
+      switch (e.type) {
+        case 'update_file': {
+          const data: TableView = YamlHelper.parse(document.getText());
+          const yaml = YamlHelper.parse(YamlHelper.jsonToYaml(e.json));
 
-	private _getWebviewContent(webview: vscode.Webview) {
-		const resourcesUri = this._config.getExtensionUri();
-		const webviewUri = FileSystemHelper.getUri(webview, resourcesUri, ["out", "tableListDefaultsEditor.js"]);
-		const nonce = this.getNonce();
-	
-		return /*html*/ `
+          if (yaml.loc.length != 0) {
+            // это костыль чтобы сохранить разные отступы
+            // в дефлотных значениях и остальном документе
+            data.defaults['LOC'] = '<LOC>';
+          } else {
+            // TODO: проверить, что LOC не пусто
+            delete data.defaults.LOC;
+          }
+          if (yaml.pt.length != 0) {
+            // это костыль чтобы сохранить разные отступы
+            // в дефлотных значениях и остальном документе
+            data['defaults']['PT'] = '<PT>';
+          } else {
+            // TODO: проверить, что PT не пусто
+            delete data.defaults.PT;
+          }
+          let updatedTableFileContent = YamlHelper.stringify(data, { '!!null': 'empty' });
+
+          // это костыль чтобы сохранить разные отступы
+          // в дефолтных значениях и остальном документе
+          const margin = '    ';
+          const loc = YamlHelper.stringify(yaml['loc'], { '!!null': 'empty' })
+            .split(os.EOL)
+            .filter(Boolean)
+            .map((l) => `${margin}${l}`)
+            .join(os.EOL);
+          updatedTableFileContent = updatedTableFileContent.replace('<LOC>', `${os.EOL}${loc}`);
+
+          const pt = YamlHelper.stringify(yaml['pt'], { '!!null': 'empty' })
+            .split(os.EOL)
+            .filter(Boolean)
+            .map((l) => `${margin}${l}`)
+            .join(os.EOL);
+          updatedTableFileContent = updatedTableFileContent.replace('<PT>', `${os.EOL}${pt}`);
+
+          this.updateTextDocument(document, updatedTableFileContent);
+          return;
+        }
+        case 'info':
+          DialogHelper.showInfo(e.message);
+          return;
+        case 'error':
+          DialogHelper.showError(e.message);
+          return;
+        case 'refresh':
+          updateWebview();
+          return;
+        case 'add_loc':
+          vscode.commands.executeCommand('xp.AddLOCTLRowCommand');
+          return;
+        case 'add_pt':
+          vscode.commands.executeCommand('xp.AddPTTLRowCommand');
+          return;
+      }
+    });
+
+    updateWebview();
+  }
+
+  private async updateTextDocument(document: vscode.TextDocument, json: any) {
+    const edit = new vscode.WorkspaceEdit();
+
+    edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), json);
+    return vscode.workspace.applyEdit(edit);
+  }
+
+  private getNonce() {
+    let text = '';
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (let i = 0; i < 32; i++) {
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
+  }
+
+  private _getWebviewContent(webview: vscode.Webview) {
+    const resourcesUri = this._config.getExtensionUri();
+    const webviewUri = FileSystemHelper.getUri(webview, resourcesUri, [
+      'out',
+      'tableListDefaultsEditor.js'
+    ]);
+    const nonce = this.getNonce();
+
+    return /*html*/ `
 				  <!DOCTYPE html>
 				  <html lang="en">
 					<head>
@@ -234,5 +239,5 @@ export class DefaultTLValuesEditorViewProvider implements vscode.CustomTextEdito
 					</body>
 				  </html>
 				`;
-	}
+  }
 }

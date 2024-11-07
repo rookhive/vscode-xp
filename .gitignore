@@ -5,3 +5,4 @@ client/server
 .ai
 Build/
 contract
+*.tsbuildinfo

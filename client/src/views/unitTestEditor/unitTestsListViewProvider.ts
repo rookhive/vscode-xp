@@ -19,215 +19,205 @@ import { FileSystemHelper } from '../../helpers/fileSystemHelper';
  * Список тестов в отдельной вьюшке.
  */
 export class UnitTestsListViewProvider implements vscode.TreeDataProvider<BaseUnitTest> {
+  private _onDidChangeTreeData: vscode.EventEmitter<BaseUnitTest | undefined | void> =
+    new vscode.EventEmitter<BaseUnitTest | undefined | void>();
+  readonly onDidChangeTreeData: vscode.Event<BaseUnitTest | undefined | void> =
+    this._onDidChangeTreeData.event;
 
-	private _onDidChangeTreeData: vscode.EventEmitter<BaseUnitTest | undefined | void> = new vscode.EventEmitter<BaseUnitTest | undefined | void>();
-	readonly onDidChangeTreeData: vscode.Event<BaseUnitTest | undefined | void> = this._onDidChangeTreeData.event;
+  private static _rule: RuleBaseItem;
 
-	private static _rule: RuleBaseItem;
+  public static readonly viewId = 'ModularTestsListView';
 
-	public static readonly viewId = 'ModularTestsListView';
-	
-	public static readonly refreshCommand = "ModularTestsListView.refresh";
-	public static readonly reloadAndRefreshCommand = "ModularTestsListView.reloadAndRefresh";
-	public static readonly setRuleCommand = "ModularTestsListView.setRule";
+  public static readonly refreshCommand = 'ModularTestsListView.refresh';
+  public static readonly reloadAndRefreshCommand = 'ModularTestsListView.reloadAndRefresh';
+  public static readonly setRuleCommand = 'ModularTestsListView.setRule';
 
-	public static readonly runTestsCommand = "ModularTestsListView.runTests";
-	public static readonly addTestCommand = "ModularTestsListView.addTest";
-	public static readonly removeTestCommand = "ModularTestsListView.removeTest";
+  public static readonly runTestsCommand = 'ModularTestsListView.runTests';
+  public static readonly addTestCommand = 'ModularTestsListView.addTest';
+  public static readonly removeTestCommand = 'ModularTestsListView.removeTest';
 
-	private static isRule(item: RuleBaseItem | Table | Macros) : item is RuleBaseItem {
-		return (item as RuleBaseItem).createNewUnitTest !== undefined;
-	}
+  private static isRule(item: RuleBaseItem | Table | Macros): item is RuleBaseItem {
+    return (item as RuleBaseItem).createNewUnitTest !== undefined;
+  }
 
-	public static init(config: Configuration) : UnitTestsListViewProvider {
+  public static init(config: Configuration): UnitTestsListViewProvider {
+    const testsListViewProvider = new UnitTestsListViewProvider(config);
 
-		const testsListViewProvider = new UnitTestsListViewProvider(config);
+    const testsListView = vscode.window.createTreeView(UnitTestsListViewProvider.viewId, {
+      treeDataProvider: testsListViewProvider
+    });
 
-		const testsListView = vscode.window.createTreeView(
-			UnitTestsListViewProvider.viewId, {
-			treeDataProvider: testsListViewProvider
-		});
+    config.getContext().subscriptions.push(
+      vscode.commands.registerCommand(
+        UnitTestsListViewProvider.setRuleCommand,
+        (rule: RuleBaseItem) => {
+          this._rule = rule;
+        }
+      )
+    );
 
-		config.getContext().subscriptions.push(
-			vscode.commands.registerCommand(
-				UnitTestsListViewProvider.setRuleCommand, 
-				(rule: RuleBaseItem) => { 
-					this._rule = rule; 
-				}
-			)
-		);
+    config.getContext().subscriptions.push(
+      vscode.commands.registerCommand(
+        UnitTestsListViewProvider.refreshCommand,
+        (rule: RuleBaseItem) => {
+          testsListViewProvider.refresh();
+        }
+      )
+    );
 
-		config.getContext().subscriptions.push(
-			vscode.commands.registerCommand(
-				UnitTestsListViewProvider.refreshCommand, 
-				(rule: RuleBaseItem) => { 
-					testsListViewProvider.refresh(); 
-				}
-			)
-		);
+    config.getContext().subscriptions.push(
+      vscode.commands.registerCommand(UnitTestsListViewProvider.reloadAndRefreshCommand, () => {
+        const selectedRule = ContentTreeProvider.getSelectedItem();
+        if (selectedRule instanceof Correlation || selectedRule instanceof Normalization) {
+          selectedRule.reloadUnitTests();
+          testsListViewProvider.refresh();
+        }
+      })
+    );
 
-		config.getContext().subscriptions.push(
-			vscode.commands.registerCommand(
-				UnitTestsListViewProvider.reloadAndRefreshCommand, 
-				() => { 
-					const selectedRule = ContentTreeProvider.getSelectedItem();
-					if(selectedRule instanceof Correlation || selectedRule instanceof Normalization) {
-						selectedRule.reloadUnitTests();
-						testsListViewProvider.refresh(); 
-					}
-				}
-			)
-		);	
+    // Запустить все тесты.
+    config.getContext().subscriptions.push(
+      vscode.commands.registerCommand(UnitTestsListViewProvider.runTestsCommand, async () => {
+        const selectedRule = ContentTreeProvider.getSelectedItem();
 
-		// Запустить все тесты.
-		config.getContext().subscriptions.push(
-			vscode.commands.registerCommand(
-				UnitTestsListViewProvider.runTestsCommand, 
-				async () => { 
-					
-					const selectedRule = ContentTreeProvider.getSelectedItem();
+        // TODO: Сделать тесты для случая, когда выбрана папка.
+        // По-хорошему нужно сохранять все открытые документы
+        // если запускам сборку всех графов
+        if (UnitTestsListViewProvider.isRule(selectedRule)) {
+          await VsCodeApiHelper.saveRuleCodeFile(selectedRule);
+          await VsCodeApiHelper.saveTestFiles(selectedRule);
+        }
 
-					// TODO: Сделать тесты для случая, когда выбрана папка.
-					// По-хорошему нужно сохранять все открытые документы 
-					// если запускам сборку всех графов
-					if (UnitTestsListViewProvider.isRule(selectedRule)){
-						await VsCodeApiHelper.saveRuleCodeFile(selectedRule);
-						await VsCodeApiHelper.saveTestFiles(selectedRule);
-					}
-					
-					await testsListViewProvider.runTests(selectedRule); 
-					// Обновляем статус тестов.
-					await vscode.commands.executeCommand(UnitTestsListViewProvider.refreshCommand);
-				}
-			)
-		);
+        await testsListViewProvider.runTests(selectedRule);
+        // Обновляем статус тестов.
+        await vscode.commands.executeCommand(UnitTestsListViewProvider.refreshCommand);
+      })
+    );
 
-		config.getContext().subscriptions.push(
-			vscode.commands.registerCommand(
-				UnitTestsListViewProvider.addTestCommand, 
-				async () => { 
-					const selectedRule = ContentTreeProvider.getSelectedItem();
-					// TODO: Сделать тесты для случая, когда выбрана папка.
-					// По-хорошему нужно сохранять все открытые документы 
-					// если запускам сборку всех графов
-					if (UnitTestsListViewProvider.isRule(selectedRule)){
-						// Добавили новый юнит-тесты.
-						selectedRule.addNewUnitTest();
-						await selectedRule.saveUnitTests();
-					}
-					// Обновили вьюшку.
-					testsListViewProvider.refresh();
-				}
-			)
-		);
+    config.getContext().subscriptions.push(
+      vscode.commands.registerCommand(UnitTestsListViewProvider.addTestCommand, async () => {
+        const selectedRule = ContentTreeProvider.getSelectedItem();
+        // TODO: Сделать тесты для случая, когда выбрана папка.
+        // По-хорошему нужно сохранять все открытые документы
+        // если запускам сборку всех графов
+        if (UnitTestsListViewProvider.isRule(selectedRule)) {
+          // Добавили новый юнит-тесты.
+          selectedRule.addNewUnitTest();
+          await selectedRule.saveUnitTests();
+        }
+        // Обновили вьюшку.
+        testsListViewProvider.refresh();
+      })
+    );
 
-		config.getContext().subscriptions.push(
-			vscode.commands.registerCommand(
-				UnitTestsListViewProvider.removeTestCommand, 
-				async (test : BaseUnitTest) => { 
-					// Сохраним все несохраненные файлы, так как будем сдвигать их содержимое
-					// если удаляются тесты с начала
-					await vscode.workspace.saveAll(false);
-					const selectedRule = ContentTreeProvider.getSelectedItem();
+    config.getContext().subscriptions.push(
+      vscode.commands.registerCommand(
+        UnitTestsListViewProvider.removeTestCommand,
+        async (test: BaseUnitTest) => {
+          // Сохраним все несохраненные файлы, так как будем сдвигать их содержимое
+          // если удаляются тесты с начала
+          await vscode.workspace.saveAll(false);
+          const selectedRule = ContentTreeProvider.getSelectedItem();
 
-					// TODO: Сделать тесты для случая, когда выбрана папка.
-					// По-хорошему нужно сохранять все открытые документы 
-					// если запускам сборку всех графов
-					if (UnitTestsListViewProvider.isRule(selectedRule)){
-						// Перечитываем тесты с диска после сохранения.
-						selectedRule.reloadUnitTests();
-						
-						// Удаляем выделенный тест.
-						const tests = selectedRule.getUnitTests();
-						const index = test.getNumber() - 1;
-						if (!tests?.[index]) { 
-							DialogHelper.showError(`Не удалось найти тест ${test.getNumber()}`);
-							return;
-						}
-						tests.splice(index, 1);
+          // TODO: Сделать тесты для случая, когда выбрана папка.
+          // По-хорошему нужно сохранять все открытые документы
+          // если запускам сборку всех графов
+          if (UnitTestsListViewProvider.isRule(selectedRule)) {
+            // Перечитываем тесты с диска после сохранения.
+            selectedRule.reloadUnitTests();
 
-						// Обновляем и сохраняем.
-						selectedRule.setUnitTests(tests);
-						selectedRule.saveUnitTests();
-					}
-					testsListViewProvider.refresh();
-				}
-			)
-		);
+            // Удаляем выделенный тест.
+            const tests = selectedRule.getUnitTests();
+            const index = test.getNumber() - 1;
+            if (!tests?.[index]) {
+              DialogHelper.showError(`Не удалось найти тест ${test.getNumber()}`);
+              return;
+            }
+            tests.splice(index, 1);
 
-		return testsListViewProvider;
-	}
+            // Обновляем и сохраняем.
+            selectedRule.setUnitTests(tests);
+            selectedRule.saveUnitTests();
+          }
+          testsListViewProvider.refresh();
+        }
+      )
+    );
 
-	private constructor(private config : Configuration) {
-	}
+    return testsListViewProvider;
+  }
 
-	public async runTests(rule: RuleBaseItem | Table | Macros) : Promise<void> {
+  private constructor(private config: Configuration) {}
 
-		// Нормализатор не переваривает кириллицу в пути
-		// 20 May 2024 - 16:36:53.900 | ERROR | normalize | normalizer-cli returned code 1:
-		// Terminated due to exception, what(): Can't cast from NIL to DICTIONARY
-		// 20 May 2024 - 16:36:53.900 | ERROR | repo_tools | Must exit due to some critical errors!
-		// 20 May 2024 - 16:36:53.900 | INFO | repo_tools | Removing temp directory C:\Users\User\AppData\Local\Temp\eXtractionAndProcessing\tmp\packages\240520163653_h_8qhmn5
-		const ruleDirPath = rule.getDirectoryPath();
-		if(!FileSystemHelper.isValidPath(ruleDirPath)) {
-			DialogHelper.showError(`Путь к правилу '${ruleDirPath}' содержит недопустимые символы. Для корректной работы необходимо использовать только латинские буквы, цифры и другие корректные для путей символы`);
-			return;
-		}
+  public async runTests(rule: RuleBaseItem | Table | Macros): Promise<void> {
+    // Нормализатор не переваривает кириллицу в пути
+    // 20 May 2024 - 16:36:53.900 | ERROR | normalize | normalizer-cli returned code 1:
+    // Terminated due to exception, what(): Can't cast from NIL to DICTIONARY
+    // 20 May 2024 - 16:36:53.900 | ERROR | repo_tools | Must exit due to some critical errors!
+    // 20 May 2024 - 16:36:53.900 | INFO | repo_tools | Removing temp directory C:\Users\User\AppData\Local\Temp\eXtractionAndProcessing\tmp\packages\240520163653_h_8qhmn5
+    const ruleDirPath = rule.getDirectoryPath();
+    if (!FileSystemHelper.isValidPath(ruleDirPath)) {
+      DialogHelper.showError(
+        `Путь к правилу '${ruleDirPath}' содержит недопустимые символы. Для корректной работы необходимо использовать только латинские буквы, цифры и другие корректные для путей символы`
+      );
+      return;
+    }
 
-		const tests = await this.getChildren();
+    const tests = await this.getChildren();
 
-		// Сбрасываем результаты предыдущих тестов.
-		tests.forEach(t => t.setStatus(TestStatus.Unknown));
-		const testHandler = async (unitTest : BaseUnitTest) => {
-			const rule = unitTest.getRule();
-			const testRunner = rule.getUnitTestRunner();
-			return testRunner.run(unitTest);
-		};
+    // Сбрасываем результаты предыдущих тестов.
+    tests.forEach((t) => t.setStatus(TestStatus.Unknown));
+    const testHandler = async (unitTest: BaseUnitTest) => {
+      const rule = unitTest.getRule();
+      const testRunner = rule.getUnitTestRunner();
+      return testRunner.run(unitTest);
+    };
 
-		return vscode.window.withProgress<void>({
-			location: vscode.ProgressLocation.Notification,
-			cancellable: false,
-		}, async (progress) => {
-			Log.progress(progress, `Выполняются модульные тесты правила ${rule.getName()}`);
-			
-			for (const test of tests) {
-				try {
-					await testHandler(test);
-				}
-				catch(error) {
-					test.setStatus(TestStatus.Failed);
-					Log.error(error);
-				} 
-				finally {
-					await vscode.commands.executeCommand(UnitTestsListViewProvider.refreshCommand);
-				}
-			}
-		});
-	}
+    return vscode.window.withProgress<void>(
+      {
+        location: vscode.ProgressLocation.Notification,
+        cancellable: false
+      },
+      async (progress) => {
+        Log.progress(progress, `Выполняются модульные тесты правила ${rule.getName()}`);
 
-	refresh(): void {
-		this._onDidChangeTreeData.fire();
-	}
+        for (const test of tests) {
+          try {
+            await testHandler(test);
+          } catch (error) {
+            test.setStatus(TestStatus.Failed);
+            Log.error(error);
+          } finally {
+            await vscode.commands.executeCommand(UnitTestsListViewProvider.refreshCommand);
+          }
+        }
+      }
+    );
+  }
 
-	getTreeItem(element: BaseUnitTest): vscode.TreeItem {
-		return element;
-	}
+  refresh(): void {
+    this._onDidChangeTreeData.fire();
+  }
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	getChildren(element?: BaseUnitTest): Thenable<(BaseUnitTest)[]> {
-		const selectedRule = ContentTreeProvider.getSelectedItem();
+  getTreeItem(element: BaseUnitTest): vscode.TreeItem {
+    return element;
+  }
 
-		if(!selectedRule) {
-			return Promise.resolve([]);
-		}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getChildren(element?: BaseUnitTest): Thenable<BaseUnitTest[]> {
+    const selectedRule = ContentTreeProvider.getSelectedItem();
 
-		// TODO: Сделать тесты для случая, когда выбрана папка.
-		// По-хорошему нужно сохранять все открытые документы 
-		// если запускам сборку всех графов
-		if (UnitTestsListViewProvider.isRule(selectedRule)){
-			const tests = selectedRule.getUnitTests();
-			return Promise.resolve(tests);
-		}
-		return Promise.resolve([]);
-	}
+    if (!selectedRule) {
+      return Promise.resolve([]);
+    }
+
+    // TODO: Сделать тесты для случая, когда выбрана папка.
+    // По-хорошему нужно сохранять все открытые документы
+    // если запускам сборку всех графов
+    if (UnitTestsListViewProvider.isRule(selectedRule)) {
+      const tests = selectedRule.getUnitTests();
+      return Promise.resolve(tests);
+    }
+    return Promise.resolve([]);
+  }
 }

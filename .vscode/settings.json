@@ -3,7 +3,10 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
-  "[typescript][typescriptreact][scss]": {
+  "editor.formatOnSave": true,
+  "editor.formatOnType": false,
+  "editor.formatOnPaste": false,
+  "[javascript][typescript][typescriptreact][css][scss]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }

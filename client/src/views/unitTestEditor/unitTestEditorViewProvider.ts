@@ -1,52 +1,36 @@
-import * as fs from "fs";
-import * as vscode from "vscode";
-import * as path from "path";
+import * as fs from 'fs';
+import * as vscode from 'vscode';
 
-import { Configuration } from "../../models/configuration";
-import { BaseUnitTest } from "../../models/tests/baseUnitTest";
-import { TestHelper } from "../../helpers/testHelper";
-import { TestStatus } from "../../models/tests/testStatus";
-import { FileSystemHelper } from "../../helpers/fileSystemHelper";
-import { MustacheFormatter } from "../mustacheFormatter";
-import { DialogHelper } from "../../helpers/dialogHelper";
-import { ExceptionHelper } from "../../helpers/exceptionHelper";
-import { UnitTestsListViewProvider } from "./unitTestsListViewProvider";
-import { XpException } from "../../models/xpException";
-import { RegExpHelper } from "../../helpers/regExpHelper";
-import { Correlation } from "../../models/content/correlation";
-import { Normalization } from "../../models/content/normalization";
-import { WebViewProviderBase } from "../tableListsEditor/webViewProviderBase";
+import { Configuration } from '../../models/configuration';
+import { BaseUnitTest } from '../../models/tests/baseUnitTest';
+import { TestHelper } from '../../helpers/testHelper';
+import { DialogHelper } from '../../helpers/dialogHelper';
+import { ExceptionHelper } from '../../helpers/exceptionHelper';
+import { UnitTestsListViewProvider } from './unitTestsListViewProvider';
+import { XpException } from '../../models/xpException';
+import { RegExpHelper } from '../../helpers/regExpHelper';
+import { Correlation } from '../../models/content/correlation';
+import { Normalization } from '../../models/content/normalization';
+import { WebViewProviderBase } from '../tableListsEditor/webViewProviderBase';
+import webviewHtmlProvider from '../webviewHtmlProvider';
 
 export class UnitTestContentEditorViewProvider extends WebViewProviderBase {
-  public static readonly viewId = "ModularTestContentEditorView";
+  public static readonly viewId = 'ModularTestContentEditorView';
 
-  public static readonly showEditorCommand =
-    "ModularTestContentEditorView.showEditor";
+  public static readonly showEditorCommand = 'ModularTestContentEditorView.showEditor';
   public static readonly onTestSelectionChangeCommand =
-    "ModularTestContentEditorView.onTestSelectionChange";
+    'ModularTestContentEditorView.onTestSelectionChange';
 
   private test: BaseUnitTest;
 
-  public constructor(
-    private readonly _config: Configuration,
-    private readonly _templatePath: string
-  ) {
+  public constructor(private readonly _config: Configuration) {
     super();
   }
 
   public static init(config: Configuration): void {
     const context = config.getContext();
 
-    // Форма создания визуализации интеграционных тестов.
-    const templatePath = path.join(
-      config.getExtensionPath(),
-      path.join("client", "templates", "UnitTestEditor", "UnitTestEditor.html")
-    );
-
-    const provider = new UnitTestContentEditorViewProvider(
-      config,
-      templatePath
-    );
+    const provider = new UnitTestContentEditorViewProvider(config);
 
     // Открытие кода теста по нажатию на его номер.
     context.subscriptions.push(
@@ -55,9 +39,7 @@ export class UnitTestContentEditorViewProvider extends WebViewProviderBase {
         async (test: BaseUnitTest) => {
           const testPath = test.getTestExpectationPath();
           if (!fs.existsSync(testPath)) {
-            vscode.window.showWarningMessage(
-              `Не удалось открыть тест: '${testPath}'`
-            );
+            vscode.window.showWarningMessage(`Не удалось открыть тест: '${testPath}'`);
             return;
           }
           // test.show();
@@ -71,10 +53,7 @@ export class UnitTestContentEditorViewProvider extends WebViewProviderBase {
         UnitTestContentEditorViewProvider.onTestSelectionChangeCommand,
         async (test: BaseUnitTest) => {
           // Открываем код теста.
-          vscode.commands.executeCommand(
-            UnitTestContentEditorViewProvider.showEditorCommand,
-            test
-          );
+          vscode.commands.executeCommand(UnitTestContentEditorViewProvider.showEditorCommand, test);
         }
       )
     );
@@ -101,12 +80,16 @@ export class UnitTestContentEditorViewProvider extends WebViewProviderBase {
       vscode.ViewColumn.One,
       {
         retainContextWhenHidden: true,
-        enableFindWidget: true,
+        enableFindWidget: true
       }
     );
 
     panel.webview.options = {
       enableScripts: true,
+      localResourceRoots: [
+        vscode.Uri.joinPath(this._config.getExtensionUri(), 'client/webview/out/assets'),
+        vscode.Uri.joinPath(this._config.getExtensionUri(), 'client/webview/node_modules')
+      ]
     };
 
     panel.webview.onDidReceiveMessage(this.receiveMessageFromWebView, this);
@@ -117,91 +100,68 @@ export class UnitTestContentEditorViewProvider extends WebViewProviderBase {
   }
 
   private async updateView(): Promise<void> {
-    const rule = this.test.getRule();
-
-    const resourcesUri = this._config.getExtensionUri();
-    const extensionBaseUri = this.getView().webview.asWebviewUri(resourcesUri);
-
-    const plain = {
-      UnitTest: null,
-      ExtensionBaseUri: extensionBaseUri,
-      RuleName: rule.getName(),
-    };
-
     try {
-      const formattedTestInput = TestHelper.formatTestCodeAndEvents(
-        this.test.getTestInputData()
-      );
-      const formattedTestExpectation = TestHelper.formatTestCodeAndEvents(
-        this.test.getTestExpectation()
-      );
-
-      let testStatusStyle: string;
-      const testStatus = this.test.getStatus();
       vscode.commands.executeCommand(UnitTestsListViewProvider.refreshCommand);
-      switch (testStatus) {
-        case TestStatus.Unknown: {
-          testStatusStyle = "";
-          break;
-        }
-        case TestStatus.Success: {
-          testStatusStyle = "success";
-          break;
-        }
-        case TestStatus.Failed: {
-          testStatusStyle = "failure";
-          break;
-        }
-      }
 
-      plain["UnitTest"] = {
-        TestNumber: this.test.getNumber(),
-        TestInput: formattedTestInput,
-        TestExpectation: formattedTestExpectation,
-        TestOutput: this.test.getOutput(),
-        TestStatus: testStatusStyle,
+      const getTranslation: (s: string) => string = this._config.getMessage.bind(this._config);
+
+      const translations = {
+        EditorTitle: getTranslation('View.UnitTests.EditorTitle'),
+        Save: getTranslation('Save'),
+        Run: getTranslation('View.UnitTests.Run'),
+        WordWrap: getTranslation('View.UnitTests.WordWrap'),
+        ActualResult: getTranslation('View.UnitTests.ActualResult'),
+        ConditionForPassingTheTest: getTranslation('View.UnitTests.ConditionForPassingTheTest'),
+        CorrelationRawEvents: getTranslation('View.UnitTests.CorrelationRawEvents'),
+        NormalizationRawEvents: getTranslation('View.UnitTests.NormalizationRawEvents'),
+        ReplaceExpectedEventWithActual: getTranslation(
+          'View.UnitTests.ReplaceExpectedEventWithActual'
+        )
       };
 
-      const template = await FileSystemHelper.readContentFile(
-        this._templatePath
+      const webviewRootUri = this.getView()
+        .webview.asWebviewUri(this._config.getExtensionUri())
+        .toString();
+
+      const htmlContent = await webviewHtmlProvider.getWebviewHtml(
+        'unit-test-editor',
+        webviewRootUri,
+        translations
       );
-      const formatter = new MustacheFormatter(template);
-      const htmlContent = formatter.format(plain);
+
       this.setHtmlContent(htmlContent);
     } catch (error) {
-      DialogHelper.showError("Не удалось открыть модульный тест", error);
+      DialogHelper.showError('Не удалось открыть модульный тест', error);
     }
   }
 
   private async receiveMessageFromWebView(message: any) {
     switch (message.command) {
-      case "documentIsReady": {
+      case 'documentIsReady': {
         return this.documentIsReadyHandler();
       }
-      case "saveTest": {
+      case 'UnitTestEditor.saveTest': {
         await this.saveTest(message);
         await this.updateInputDataInView(this.test.getTestInputData());
 
-        const expectationData = TestHelper.formatTestCodeAndEvents(
-          this.test.getTestExpectation()
-        );
+        const expectationData = TestHelper.formatTestCodeAndEvents(this.test.getTestExpectation());
         await this.updateExpectationInView(expectationData);
 
         return;
       }
 
-      case "runTest": {
+      case 'UnitTestEditor.runTest': {
         await this.runUnitTestHandler(message);
         return;
       }
 
-      case "updateExpectation": {
+      case 'UnitTestEditor.updateExpectation': {
         await this.updateExpectationHandler();
         return;
       }
 
       default: {
-        DialogHelper.showError("The transmitted command is not supported");
+        DialogHelper.showError('The transmitted command is not supported');
       }
     }
   }
@@ -210,7 +170,7 @@ export class UnitTestContentEditorViewProvider extends WebViewProviderBase {
     const actualEvent = this.test.getActualData();
     if (!actualEvent) {
       DialogHelper.showWarning(
-        "Фактическое событие не получено. Запустите тест для получения фактического события, после чего можно заменить ожидаемое событие фактическим"
+        'Фактическое событие не получено. Запустите тест для получения фактического события, после чего можно заменить ожидаемое событие фактическим'
       );
       return;
     }
@@ -242,17 +202,14 @@ export class UnitTestContentEditorViewProvider extends WebViewProviderBase {
     await this.test.save();
 
     this.updateExpectationInView(testResult);
-    DialogHelper.showInfo(
-      "Ожидаемое событие обновлено. Запустите еще раз тест, он должен пройти"
-    );
+    // TODO: translate
+    DialogHelper.showInfo('Ожидаемое событие обновлено. Запустите еще раз тест, он должен пройти');
   }
 
   private async documentIsReadyHandler(): Promise<boolean> {
     const inputEvents = this.test.getTestInputData();
 
-    const expectationData = TestHelper.formatTestCodeAndEvents(
-      this.test.getTestExpectation()
-    );
+    const expectationData = TestHelper.formatTestCodeAndEvents(this.test.getTestExpectation());
 
     let inputType = undefined;
     let expectationLanguage = undefined;
@@ -260,8 +217,8 @@ export class UnitTestContentEditorViewProvider extends WebViewProviderBase {
     // Для корреляций на вход всегда json (нормализованное событие)
     // Код теста это xp-test-code (json, expect, default и т.д.)
     if (rule instanceof Correlation) {
-      inputType = "json";
-      expectationLanguage = "xp-test-code";
+      inputType = 'json';
+      expectationLanguage = 'xp-test-code';
     }
 
     // TODO: Для законченной нормализации в теории можно распарсить код правила и понять какой тип данных в raw_N.txt
@@ -269,10 +226,10 @@ export class UnitTestContentEditorViewProvider extends WebViewProviderBase {
     if (rule instanceof Normalization) {
       const ruleCode = await rule.getRuleCode();
       if (ruleCode.match(/^JSON\s*=\s*/)) {
-        inputType = "json";
+        inputType = 'json';
       }
 
-      expectationLanguage = "json";
+      expectationLanguage = 'json';
     }
 
     // Контракт на команду к FE
@@ -282,14 +239,17 @@ export class UnitTestContentEditorViewProvider extends WebViewProviderBase {
     // expectation: {language: json|xp-test-code, data: string},
     // }
     await this.postMessage({
-      command: "setIUnitTestEditorViewContent",
-      inputEvents: { language: inputType, data: inputEvents },
-      expectation: { language: expectationLanguage, data: expectationData },
+      command: 'UnitTestEditor.setState',
+      payload: {
+        ruleType: rule instanceof Correlation ? 'correlation' : 'normalization',
+        inputEvents: { language: inputType, data: inputEvents },
+        expectation: { language: expectationLanguage, data: expectationData }
+      }
     });
 
     // Если в тесте сохранены фактические данные, например, после запуска тестов по списку.
     const actualData = this.test.getActualData();
-    if(actualData) {
+    if (actualData) {
       return this.updateActualDataInView(actualData);
     }
   }
@@ -314,7 +274,7 @@ export class UnitTestContentEditorViewProvider extends WebViewProviderBase {
       this.test.setTestExpectation(expectation);
       await this.test.save();
 
-      DialogHelper.showInfo("Тест успешно сохранен");
+      DialogHelper.showInfo('Тест успешно сохранен');
     } catch (error) {
       ExceptionHelper.show(
         error,
@@ -327,15 +287,13 @@ export class UnitTestContentEditorViewProvider extends WebViewProviderBase {
 
   private async runUnitTestHandler(message: any) {
     if (!message?.inputData) {
-      DialogHelper.showError(
-        "Не заданы входные данные теста. Задайте их и повторите"
-      );
+      DialogHelper.showError('Не заданы входные данные теста. Задайте их и повторите');
       return;
     }
 
     if (!message?.expectation) {
       DialogHelper.showError(
-        "Не задано условие проверки теста или ожидаемое событие. Задайте его и повторите"
+        'Не задано условие проверки теста или ожидаемое событие. Задайте его и повторите'
       );
       return;
     }
@@ -352,51 +310,47 @@ export class UnitTestContentEditorViewProvider extends WebViewProviderBase {
     return vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        cancellable: false,
+        cancellable: false
       },
       async (progress) => {
         try {
           progress.report({
-            message: `Выполнение теста №${this.test.getNumber()}`,
+            message: `Выполнение теста №${this.test.getNumber()}`
           });
           const runner = rule.getUnitTestRunner();
           this.test = await runner.run(this.test);
 
           const actualData = this.test.getActualData();
           this.updateActualDataInView(actualData);
-
         } catch (error) {
           const outputData = this.test.getOutput();
           this.updateActualDataInView(outputData);
-          ExceptionHelper.show(
-            error,
-            "Неожиданная ошибка выполнения модульного теста"
-          );
+          ExceptionHelper.show(error, 'Неожиданная ошибка выполнения модульного теста');
         } finally {
           vscode.commands.executeCommand(UnitTestsListViewProvider.refreshCommand);
-        }        
+        }
       }
     );
   }
 
   private async updateExpectationInView(expectation: string): Promise<boolean> {
     return this.postMessage({
-      command: "updateExpectation",
-      expectation: expectation,
+      command: 'UnitTestEditor.updateExpectation',
+      expectation: expectation
     });
   }
 
   private async updateInputDataInView(inputData: string): Promise<boolean> {
     return this.postMessage({
-      command: "updateInputData",
-      inputData: inputData,
+      command: 'UnitTestEditor.updateInputData',
+      inputData: inputData
     });
   }
 
   private async updateActualDataInView(actualData: string): Promise<boolean> {
     return this.postMessage({
-      command: "updateActualData",
-      actualData: actualData,
+      command: 'UnitTestEditor.updateActualData',
+      actualData: actualData
     });
   }
 }

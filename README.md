@@ -67,26 +67,15 @@ git clone https://github.com/Security-Experts-Community/vscode-xp
 
 ### Компиляция всех частей проекта
 
-Чтобы вести разработку, нужно собрать клиент, сервер, ui тулкит для старых вью и новые вью со встраиванием реакта, используйте команду`npm run compile:all`.
-При добавлении новых реакт приложений нужно обновить содержание скрипта `react:build:all` сборкой таких реакт приложений.
+Чтобы вести разработку, нужно собрать клиент, сервер, ui тулкит для старых вью и новые вью со встраиванием реакта, используйте команду`npm run compile`.
+
+Для разработки webview выполните команду `npm run watch:webview` и запустите конфигурацию `Launch Client (Webview DEV)`.
 
 ### Сборка расширения в установочный пакет
 
 Перед сборкой установочного пакета расширения (\*.vsix-файл) вам нужно в корне проекта выполнить команду `npm install -g vsce`.
 
 Чтобы собрать установочный пакет расширения, выполните команду `vsce package -o vscode-xp.vsix` или запустите скрипт `publish.py` в корне проекта.
-
-### Прокидывание vscode ui toolkit в webview
-
-Неактуально, так как новые вью разрабатываются со встраиванием React. Удалить этот пункт, когда перепишем все вью на React.
-
-1. В провайдер webview добавляем `const webviewUri = this.getUri(this._view.webview, this._config.getExtensionUri(), ["client", "out", "ui.js"]);`
-
-2. Прокидываем webviewUri в plain: `"WebviewUri": webviewUri`
-
-3. В вебвью добавляем в раздел скриптов добавляем `<script type="module" src="{{WebviewUri}}"></script>`
-
-4. Добавляем в вебвью любой компонент из [документации тулкита](https://github.com/microsoft/vscode-webview-ui-toolkit/blob/main/docs/components.md)
 
 ### Если не подтягиваются изменения кода в процессе разработки
 

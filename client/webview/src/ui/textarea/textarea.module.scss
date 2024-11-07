@@ -1,0 +1,27 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  padding: 0;
+  border-radius: 2px;
+  background-color: var(--vscode-settings-textInputBackground);
+  min-height: 60px;
+
+  &.isFocused {
+    opacity: 1;
+    outline-color: var(--vscode-focusBorder);
+    outline-offset: -1px;
+    outline-style: solid;
+    outline-width: 1px;
+  }
+}
+
+.input {
+  flex-grow: 1;
+  width: 100%;
+  height: 100%;
+  padding: 4px 6px;
+  border: 1px solid var(--vscode-settings-textInputBorder);
+  color: var(--vscode-settings-textInputForeground);
+  outline: none;
+}

@@ -6,10 +6,10 @@ import * as os from 'os';
 import { workspace, ExtensionContext } from 'vscode';
 
 import {
-	LanguageClient,
-	LanguageClientOptions,
-	ServerOptions,
-	TransportKind
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+  TransportKind
 } from 'vscode-languageclient/node';
 
 import { XpSignatureHelpProvider } from './providers/function/xpSignatureHelpProvider';
@@ -45,190 +45,189 @@ let client: LanguageClient;
 let siemCustomPackingTaskProvider: vscode.Disposable | undefined;
 
 export async function activate(context: ExtensionContext): Promise<void> {
-	try {
-		// Инициализация реестр глобальных параметров.
-		const config = await Configuration.init(context);
+  try {
+    // Инициализация реестр глобальных параметров.
+    const config = await Configuration.init(context);
 
-		let extensionVersion;
-		try {
-			const packageFilePath = path.resolve(__dirname, '../../package.json');
-			const packageFileContent = await FileSystemHelper.readContentFile(packageFilePath);
-			extensionVersion = JSON.parse(packageFileContent).version;
-		}
-		catch (error) {
-			Log.warn(`Failed to get the extension version`, error);
-		}
+    let extensionVersion;
+    try {
+      const packageFilePath = path.resolve(__dirname, '../../package.json');
+      const packageFileContent = await FileSystemHelper.readContentFile(packageFilePath);
+      extensionVersion = JSON.parse(packageFileContent).version;
+    } catch (error) {
+      Log.warn(`Failed to get the extension version`, error);
+    }
 
-		Log = Logger.init(config);
-		Log.info(`Extension activation ${extensionVersion ?? ''} has started '${Configuration.getExtensionDisplayName()}'`);
+    Log = Logger.init(config);
+    Log.info(
+      `Extension activation ${extensionVersion ?? ''} has started '${Configuration.getExtensionDisplayName()}'`
+    );
 
-		// Информация по ОС
-		Log.info(`OS Platform: ${os.platform()}`);
-		Log.info(`OS Type: ${os.type()}`);
-		Log.info(`OS Release: ${os.release()}`);
+    // Информация по ОС
+    Log.info(`OS Platform: ${os.platform()}`);
+    Log.info(`OS Type: ${os.type()}`);
+    Log.info(`OS Release: ${os.release()}`);
 
-		await UserSettingsManager.init(config);
-		await ToolsManager.init(config);
+    await UserSettingsManager.init(config);
+    await ToolsManager.init(config);
 
-		try {
-			await config.checkUserSetting();
-		}
-		catch(error) {
-			ExceptionHelper.show(error);
-		}
+    try {
+      await config.checkUserSetting();
+    } catch (error) {
+      ExceptionHelper.show(error);
+    }
 
-		// Конфигурирование LSP.
-		const serverModule = context.asAbsolutePath(
-			path.join('server', 'out', 'server.js')
-		);
+    // Конфигурирование LSP.
+    const serverModule = context.asAbsolutePath(path.join('server', 'out', 'server.js'));
 
-		const debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
-		const serverOptions: ServerOptions = {
-			run: { module: serverModule, transport: TransportKind.ipc },
-			debug: {
-				module: serverModule,
-				transport: TransportKind.ipc,
-				options: debugOptions
-			}
-		};
+    const debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
+    const serverOptions: ServerOptions = {
+      run: { module: serverModule, transport: TransportKind.ipc },
+      debug: {
+        module: serverModule,
+        transport: TransportKind.ipc,
+        options: debugOptions
+      }
+    };
 
-		// Конфигурирование клиента для доступа к LSP.
-		const clientOptions: LanguageClientOptions = {
-			// Заменяем поддерживаемый формат на наш.
-			documentSelector: [
-				{
-					scheme: 'file',
-					language: 'xp'
-				},
-				{
-					scheme: 'file',
-					language: 'co'
-				},
-				{
-					scheme: 'file',
-					language: 'en'
-				}
-			],
-			synchronize: {
-				// Notify the server about file changes to '.clientrc files contained in the workspace
-				fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
-			}
-		};
+    // Конфигурирование клиента для доступа к LSP.
+    const clientOptions: LanguageClientOptions = {
+      // Заменяем поддерживаемый формат на наш.
+      documentSelector: [
+        {
+          scheme: 'file',
+          language: 'xp'
+        },
+        {
+          scheme: 'file',
+          language: 'co'
+        },
+        {
+          scheme: 'file',
+          language: 'en'
+        }
+      ],
+      synchronize: {
+        // Notify the server about file changes to '.clientrc files contained in the workspace
+        fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
+      }
+    };
 
-		// Создаем клиент, запускаем его и сервер.
-		client = new LanguageClient(
-			'languageServer',
-			'Language Server',
-			serverOptions,
-			clientOptions
-		);
-		client.start();
+    // Создаем клиент, запускаем его и сервер.
+    client = new LanguageClient('languageServer', 'Language Server', serverOptions, clientOptions);
+    client.start();
 
-		const rootPath =
-			(vscode.workspace.workspaceFolders && (vscode.workspace.workspaceFolders.length > 0))
-				? vscode.workspace.workspaceFolders[0].uri.fsPath
-				: undefined;
+    const rootPath =
+      vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+        ? vscode.workspace.workspaceFolders[0].uri.fsPath
+        : undefined;
 
-		YamlHelper.configure(
-			{
-				lineWidth: -1,
-				indent: 4,
-				noArrayIndent: true,
-			}
-		);
+    YamlHelper.configure({
+      lineWidth: -1,
+      indent: 4,
+      noArrayIndent: true,
+      quotingType: "'"
+    });
 
-		ContentTreeProvider.init(config, rootPath);
-		LocalizationEditorViewProvider.init(config);
-		UnitTestContentEditorViewProvider.init(config);
-		UnitTestsListViewProvider.init(config);
-		IntegrationTestEditorViewProvider.init(config);
-		MetainfoViewProvider.init(config);
-		RunningCorrelationGraphProvider.init(config);
-		TableListsEditorViewProvider.init(config);
-		SetContentTypeCommand.init(config);
-		InitKBRootCommand.init(config);
-		RetroCorrelationViewController.init(config);
-		CommonCommands.init(config);
+    ContentTreeProvider.init(config, rootPath);
+    LocalizationEditorViewProvider.init(config);
+    UnitTestContentEditorViewProvider.init(config);
+    UnitTestsListViewProvider.init(config);
+    IntegrationTestEditorViewProvider.init(config);
+    MetainfoViewProvider.init(config);
+    RunningCorrelationGraphProvider.init(config);
+    TableListsEditorViewProvider.init(config);
+    SetContentTypeCommand.init(config);
+    InitKBRootCommand.init(config);
+    RetroCorrelationViewController.init(config);
+    CommonCommands.init(config);
 
-		const templateFilePath = path.join(
-			config.getExtensionPath(),
-			"client", "templates", "TableListEditor", "html", "TableListEditor.html"
-		);
-		context.subscriptions.push(
-			DefaultTLValuesEditorViewProvider.register(context, templateFilePath, config)
-		);
+    const templateFilePath = path.join(
+      config.getExtensionPath(),
+      'client',
+      'templates',
+      'TableListEditor',
+      'html',
+      'TableListEditor.html'
+    );
+    context.subscriptions.push(
+      DefaultTLValuesEditorViewProvider.register(context, templateFilePath, config)
+    );
 
-		siemCustomPackingTaskProvider = vscode.tasks.registerTaskProvider(XPPackingTaskProvider.Type, new XPPackingTaskProvider(config));
+    siemCustomPackingTaskProvider = vscode.tasks.registerTaskProvider(
+      XPPackingTaskProvider.Type,
+      new XPPackingTaskProvider(config)
+    );
 
-		// Расширение нативного контекстного меню.
-		// TestsFormatContentMenuExtension.init(context);
+    // Расширение нативного контекстного меню.
+    // TestsFormatContentMenuExtension.init(context);
 
-		// Подпись функций.
-		await XpSignatureHelpProvider.init(context);
+    // Подпись функций.
+    await XpSignatureHelpProvider.init(context);
 
-		// Автодополнение функций.
-		await XpCompletionItemProvider.init(config);
-		await XpEnumValuesCompletionItemProvider.init(config);
+    // Автодополнение функций.
+    await XpCompletionItemProvider.init(config);
+    await XpEnumValuesCompletionItemProvider.init(config);
 
-		context.subscriptions.push(
-			vscode.languages.registerRenameProvider(
-				{
-					scheme: 'file',
-					language: 'co'
-				},
-				new XpRenameProvide()
-			)
-		);
+    context.subscriptions.push(
+      vscode.languages.registerRenameProvider(
+        {
+          scheme: 'file',
+          language: 'co'
+        },
+        new XpRenameProvide()
+      )
+    );
 
-		// Показывает общую информацию по наведению на конструкцию.
-		await XpHoverProvider.init(config);
+    // Показывает общую информацию по наведению на конструкцию.
+    await XpHoverProvider.init(config);
 
-		// Не очень понятно как тут сделать разумно.
-		const tokenModifiers = ['declaration', 'documentation'];
-		const tokenTypes = ['function', 'variable'];
-		const legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
-		await XpDocumentHighlightProvider.init(config, legend);
+    // Не очень понятно как тут сделать разумно.
+    const tokenModifiers = ['declaration', 'documentation'];
+    const tokenTypes = ['function', 'variable'];
+    const legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
+    await XpDocumentHighlightProvider.init(config, legend);
 
-		// Очистка директории временных файлов.
-		const tmpDirectory = config.getTmpDirectoryPath();
-		if (fs.existsSync(tmpDirectory)) {
-			try {
-				await FileSystemHelper.deleteAllSubDirectoriesAndFiles(tmpDirectory);
-				Log.info(`The temporary files directory '${tmpDirectory}' was successfully cleared`);
-			}
-			catch (error) {
-				Log.warn(`Error clearing files from temporary directory '${tmpDirectory}'`, error);
-			}
-		}
+    // Очистка директории временных файлов.
+    const tmpDirectory = config.getTmpDirectoryPath();
+    if (fs.existsSync(tmpDirectory)) {
+      try {
+        await FileSystemHelper.deleteAllSubDirectoriesAndFiles(tmpDirectory);
+        Log.info(`The temporary files directory '${tmpDirectory}' was successfully cleared`);
+      } catch (error) {
+        Log.warn(`Error clearing files from temporary directory '${tmpDirectory}'`, error);
+      }
+    }
 
-		// Очистка директории выходных файлов. Нужна для сохранения консистентности нормализаций.
-		const extensionSettings = config.getWorkspaceConfiguration();
-		const outputDirectoryPath = extensionSettings.get<string>("outputDirectoryPath");
-		if(fs.existsSync(outputDirectoryPath)) {
-			try {
-				await FileSystemHelper.deleteAllSubDirectoriesAndFiles(outputDirectoryPath);
-				Log.info(`The output directory '${outputDirectoryPath}' was successfully cleared`);
-			}
-			catch (error) {
-				Log.warn(`Error clearing files from output directory '${outputDirectoryPath}'`, error);
-			}
-		}
+    // Очистка директории выходных файлов. Нужна для сохранения консистентности нормализаций.
+    const extensionSettings = config.getWorkspaceConfiguration();
+    const outputDirectoryPath = extensionSettings.get<string>('outputDirectoryPath');
+    if (fs.existsSync(outputDirectoryPath)) {
+      try {
+        await FileSystemHelper.deleteAllSubDirectoriesAndFiles(outputDirectoryPath);
+        Log.info(`The output directory '${outputDirectoryPath}' was successfully cleared`);
+      } catch (error) {
+        Log.warn(`Error clearing files from output directory '${outputDirectoryPath}'`, error);
+      }
+    }
 
-		Log.info(`Extension '${Configuration.getExtensionDisplayName()}' is activated`);
-	}
-	catch (error) {
-		ExceptionHelper.show(error, `Extension '${Configuration.getExtensionDisplayName()}' failed to activate`);
-	}
+    Log.info(`Extension '${Configuration.getExtensionDisplayName()}' is activated`);
+  } catch (error) {
+    ExceptionHelper.show(
+      error,
+      `Extension '${Configuration.getExtensionDisplayName()}' failed to activate`
+    );
+  }
 }
 
 export async function deactivate(): Promise<void> | undefined {
-	if (!client) {
-		return undefined;
-	}
+  if (!client) {
+    return undefined;
+  }
 
-	if (siemCustomPackingTaskProvider) {
-		siemCustomPackingTaskProvider.dispose();
-	}
+  if (siemCustomPackingTaskProvider) {
+    siemCustomPackingTaskProvider.dispose();
+  }
 
-	return client.stop();
+  return client.stop();
 }

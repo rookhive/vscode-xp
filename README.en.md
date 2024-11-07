@@ -67,26 +67,15 @@ Mirror on GitFlic: [https://gitflic.ru/project/security-experts-community/vscode
 
 ### Compiling all parts of the project
 
-To carry out development, you need to assemble a client, server, ui toolkit for old views and new views with embedded react, use the command `npm run compile: all`.
-When adding new react applications, you need to update the contents of the `react:build:all` script with the assembly of such react applications.
+To carry out development, you need to assemble a client, server, ui toolkit for old views and new views with embedded react, use the command `npm run compile`.
+
+For the webview development use the command `npm run watch:webview` and launch the `Launch Client (Webview DEV)` configuration.
 
 ### Assembling the extension into an installation package
 
 Before building the extension installation package (\*.vsix file), you need to run the command `npm install -g vsce` in the root of the project.
 
 To build the extension installation package, run the command `vsce package -o vscode-xp.vsix` or run the `publish.py` script in the project root.
-
-### Casting vscode ui toolkit into webview
-
-Irrelevant, since new views are developed with React embedded. Delete this item when we rewrite all views in React.
-
-1. In the webview provider add `const webviewUri = this.getUri(this._view.webview, this._config.getExtensionUri(), ["client", "out", "ui.js"]);`
-
-2. We pass the webviewUri into plain: `"WebviewUri": webviewUri`
-
-3. In the webview, add `<script type="module" src="{{WebviewUri}}"></script>` to the scripts section
-
-4. Add any component from [toolkit documentation](https://github.com/microsoft/vscode-webview-ui-toolkit/blob/main/docs/components.md) to webview
 
 ### If code changes are not updated during development
 

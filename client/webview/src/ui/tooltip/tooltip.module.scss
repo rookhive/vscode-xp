@@ -1,0 +1,107 @@
+.root {
+  --pointer-offset: 0px;
+  --pointer-width: 6px;
+
+  display: none;
+  position: absolute;
+  max-width: 400px;
+  animation: 0.1s fadeIn 0.3s linear forwards;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 999;
+
+  &.isError {
+    .content {
+      background-color: var(--vscode-inputValidation-errorBackground);
+      border: 1px solid var(--vscode-inputValidation-errorBorder);
+      outline-color: var(--vscode-inputValidation-errorBorder);
+      color: var(--vscode-inputValidation-errorForeground);
+    }
+
+    .pointer::after {
+      background-color: var(--vscode-inputValidation-errorBackground) !important;
+      border-color: var(--vscode-inputValidation-errorBorder) !important;
+    }
+  }
+
+  &.isShown {
+    display: block;
+  }
+
+  &.top {
+    margin-top: -6px;
+
+    .pointer {
+      bottom: 0;
+      left: 50%;
+      transform: translate(-50%, 2.5px);
+      margin-left: var(--pointer-offset);
+
+      &::after {
+        transform: rotate(45deg);
+      }
+    }
+  }
+
+  &.bottom {
+    margin-top: 6px;
+
+    .pointer {
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, -2.5px);
+      margin-left: var(--pointer-offset);
+
+      &::after {
+        transform: rotate(225deg);
+      }
+    }
+  }
+}
+
+.content {
+  position: relative;
+  width: 100%;
+  min-width: fit-content;
+  background: var(--vscode-editorHoverWidget-background);
+  border: 1px solid var(--vscode-editorHoverWidget-border);
+  border-radius: 3px;
+  box-shadow: 0 2px 8px var(--vscode-widget-shadow);
+  padding: 2px 8px;
+  font-size: 13px;
+  line-height: 19px;
+  font-size: 12px;
+  word-wrap: break-word;
+  white-space: normal;
+  color: var(--vscode-editorHoverWidget-foreground);
+  cursor: default;
+}
+
+.pointer {
+  position: absolute;
+  height: var(--pointer-width);
+  width: var(--pointer-width);
+  pointer-events: none;
+  z-index: 2;
+
+  &::after {
+    content: '';
+    position: absolute;
+    transform-origin: 50% 50%;
+    height: var(--pointer-width);
+    width: var(--pointer-width);
+    background-color: var(--vscode-editorHoverWidget-background);
+    border-right: 1px solid var(--vscode-editorHoverWidget-border);
+    border-bottom: 1px solid var(--vscode-editorHoverWidget-border);
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    visibility: visible;
+  }
+  100% {
+    opacity: 1;
+  }
+}
