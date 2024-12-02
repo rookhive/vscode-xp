@@ -9,60 +9,60 @@ import { ViewCommand } from '../../../models/command/command';
 import { NameValidator } from '../../../models/nameValidator';
 
 export class DuplicateTreeItemCommand extends ViewCommand {
+  constructor(
+    private config: Configuration,
+    private selectedItem: RuleBaseItem
+  ) {
+    super();
+  }
 
-	constructor(private config: Configuration, private selectedItem: RuleBaseItem) {
-		super();
-	}
+  public async execute(): Promise<void> {
+    const ruleDirPath = this.selectedItem.getDirectoryPath();
 
-	public async execute(): Promise<void> {
+    let stopExecution = false;
+    vscode.workspace.textDocuments.forEach((td) => {
+      const openFilePath = td.fileName;
 
-		const ruleDirPath = this.selectedItem.getDirectoryPath();
+      // Есть несохраненные пути в переименовываемом правиле.
+      if (td.isDirty && openFilePath.includes(ruleDirPath)) {
+        const fileName = path.basename(openFilePath);
+        stopExecution = true;
+        DialogHelper.showInfo(
+          `Файл '${fileName}' не сохранен. Сохраните его и повторите действие.`
+        );
+      }
+    });
 
-		let stopExecution = false;
-		vscode.workspace.textDocuments.forEach( td => {
-			const openFilePath = td.fileName;
+    if (stopExecution) {
+      return;
+    }
 
-			// Есть несохраненные пути в переименовываемом правиле.
-			if(td.isDirty && openFilePath.includes(ruleDirPath)) {
-				const fileName = path.basename(openFilePath);
-				stopExecution = true;
-				DialogHelper.showInfo(`Файл '${fileName}' не сохранен. Сохраните его и повторите действие.`);
-			}
-		});
+    const oldRuleName = this.selectedItem.getName();
+    const userInput = await vscode.window.showInputBox({
+      ignoreFocusOut: true,
+      value: oldRuleName,
+      placeHolder: this.config.getMessage('NameOfNewRule'),
+      prompt: this.config.getMessage('NameOfNewRule'),
+      validateInput: (ruleName) => {
+        return NameValidator.validate(ruleName, this.config, this.selectedItem.getDirectoryPath());
+      }
+    });
 
-		if(stopExecution) {
-			return;
-		}
+    if (!userInput) {
+      return;
+    }
 
-		const oldRuleName = this.selectedItem.getName();
-		const userInput = await vscode.window.showInputBox( 
-			{
-				ignoreFocusOut: true,
-				value : oldRuleName,
-				placeHolder: this.config.getMessage("NameOfNewRule"),
-				prompt: this.config.getMessage("NameOfNewRule"),
-				validateInput: (ruleName) => {
-					return NameValidator.validate(ruleName, this.config, this.selectedItem.getDirectoryPath());
-				}
-			}
-		);
+    try {
+      const newRuleName = userInput.trim();
+      const duplicate = await this.selectedItem.duplicate(newRuleName);
+      await duplicate.save();
 
-		if(!userInput) {
-			return;
-		}
-		
-		try {
-			const newRuleName = userInput.trim();
-			const duplicate = await this.selectedItem.duplicate(newRuleName);
-			await duplicate.save();
-
-			// Обновить дерево и открыть корреляцию.
-			vscode.commands.executeCommand(ContentTreeProvider.refreshTreeCommand);
-			vscode.commands.executeCommand(ContentTreeProvider.onRuleClickCommand, duplicate);
-		}
-		catch(error) {
-			DialogHelper.showInfo("Не удалось дублировать правило");
-			return;
-		}
-	}
+      // Обновить дерево и открыть корреляцию.
+      vscode.commands.executeCommand(ContentTreeProvider.refreshTreeCommand);
+      vscode.commands.executeCommand(ContentTreeProvider.onRuleClickCommand, duplicate);
+    } catch (error) {
+      DialogHelper.showInfo('Не удалось дублировать правило');
+      return;
+    }
+  }
 }

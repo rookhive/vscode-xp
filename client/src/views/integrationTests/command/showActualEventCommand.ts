@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
 
-import { Command, IntegrationTestParams} from '../../../models/command/command';
+import { Command, IntegrationTestParams } from '../../../models/command/command';
 import { DialogHelper } from '../../../helpers/dialogHelper';
 import { FileSystemHelper } from '../../../helpers/fileSystemHelper';
 import { TestHelper } from '../../../helpers/testHelper';
@@ -13,55 +13,75 @@ import { FileSystemException } from '../../../models/fileSystemException';
 import { VsCodeApiHelper } from '../../../helpers/vsCodeApiHelper';
 
 export class ShowActualEventCommand extends Command {
-	constructor(private params: IntegrationTestParams) {
-		super();
-	}
-	
-	public async execute() : Promise<boolean> {
-		const ruleName = this.params.rule.getName();
-		Log.info(`Запрошено фактического события ${ruleName} теста №${this.params.testNumber}`);
+  constructor(private params: IntegrationTestParams) {
+    super();
+  }
 
-		// Получаем ожидаемое событие.
-		const tests = this.params.rule.getIntegrationTests();
-		if(tests.length < this.params.testNumber) {
-			// TODO: внутренняя ошибка
-			DialogHelper.showError(`Запрашиваемый интеграционный тест №${this.params.testNumber} правила ${ruleName} не найден`);
-			return;
-		}
+  public async execute(): Promise<boolean> {
+    const ruleName = this.params.rule.getName();
+    Log.info(`Запрошено фактического события ${ruleName} теста №${this.params.testNumber}`);
 
-		if(!fs.existsSync(this.params.tmpDirPath)) {
-			DialogHelper.showError(this.params.config.getMessage("View.IntegrationTests.Message.NoTestResultFound"));
-			return;
-		}
+    // Получаем ожидаемое событие.
+    const tests = this.params.rule.getIntegrationTests();
+    if (tests.length < this.params.testNumber) {
+      // TODO: внутренняя ошибка
+      DialogHelper.showError(
+        `Запрашиваемый интеграционный тест №${this.params.testNumber} правила ${ruleName} не найден`
+      );
+      return;
+    }
 
-		// Получаем фактическое событие.
-		const actualEventsFilePath = TestHelper.getEnrichedCorrEventFilePath(this.params.tmpDirPath, ruleName, this.params.testNumber);
-		if(!actualEventsFilePath) {
-			throw new XpException(`Результаты интеграционного теста №${this.params.testNumber} правила ${ruleName} не найдены`);
-		}
+    if (!fs.existsSync(this.params.tmpDirPath)) {
+      DialogHelper.showError(
+        this.params.config.getMessage('View.IntegrationTests.Message.NoTestResultFound')
+      );
+      return;
+    }
 
-		if(!fs.existsSync(actualEventsFilePath)) {
-			throw new FileSystemException(`Файл результатов тестов ${actualEventsFilePath} не найден`, actualEventsFilePath);
-		}
+    // Получаем фактическое событие.
+    const actualEventsFilePath = TestHelper.getEnrichedCorrEventFilePath(
+      this.params.tmpDirPath,
+      ruleName,
+      this.params.testNumber
+    );
+    if (!actualEventsFilePath) {
+      throw new XpException(
+        `Результаты интеграционного теста №${this.params.testNumber} правила ${ruleName} не найдены`
+      );
+    }
 
-		// Событие может прилетать не одно
-		const actualEventsString = await FileSystemHelper.readContentFile(actualEventsFilePath);
-		if(!actualEventsString) {
-			throw new XpException(`Фактическое событий интеграционного теста №${this.params.testNumber} правила ${ruleName} пусто`);
-		}
+    if (!fs.existsSync(actualEventsFilePath)) {
+      throw new FileSystemException(
+        `Файл результатов тестов ${actualEventsFilePath} не найден`,
+        actualEventsFilePath
+      );
+    }
 
-		// Очищаем события от технических полей и форматируем для вывода.
-		const actualEvents = actualEventsString.split(os.EOL).filter(l => l);
-		const actualFilteredEvents = TestHelper.cleanJsonlEventFromTechnicalFields(actualEvents).join(os.EOL);
-		const formattedActualEvent = TestHelper.formatTestCodeAndEvents(actualFilteredEvents);
+    // Событие может прилетать не одно
+    const actualEventsString = await FileSystemHelper.readContentFile(actualEventsFilePath);
+    if (!actualEventsString) {
+      throw new XpException(
+        `Фактическое событий интеграционного теста №${this.params.testNumber} правила ${ruleName} пусто`
+      );
+    }
 
-		// Записываем очищенное фактическое значение файл для последующего сравнения
-		const actualEventTestFilePath = path.join(this.params.tmpDirPath, `actualEvents${this.params.testNumber}.json`);
-		await FileSystemHelper.writeContentFile(actualEventTestFilePath, formattedActualEvent);
+    // Очищаем события от технических полей и форматируем для вывода.
+    const actualEvents = actualEventsString.split(os.EOL).filter((l) => l);
+    const actualFilteredEvents = TestHelper.cleanJsonlEventFromTechnicalFields(actualEvents).join(
+      os.EOL
+    );
+    const formattedActualEvent = TestHelper.formatTestCodeAndEvents(actualFilteredEvents);
 
-		Log.info(`Фактическое событие сохранено в файле по пути ${actualEventTestFilePath}`);
+    // Записываем очищенное фактическое значение файл для последующего сравнения
+    const actualEventTestFilePath = path.join(
+      this.params.tmpDirPath,
+      `actualEvents${this.params.testNumber}.json`
+    );
+    await FileSystemHelper.writeContentFile(actualEventTestFilePath, formattedActualEvent);
 
-		VsCodeApiHelper.open(vscode.Uri.file(actualEventTestFilePath));
-		return true;
-	}
+    Log.info(`Фактическое событие сохранено в файле по пути ${actualEventTestFilePath}`);
+
+    VsCodeApiHelper.open(vscode.Uri.file(actualEventTestFilePath));
+    return true;
+  }
 }

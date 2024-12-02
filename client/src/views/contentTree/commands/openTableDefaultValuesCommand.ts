@@ -12,49 +12,51 @@ import { Log } from '../../../extension';
 import { DefaultTLValuesEditorViewProvider } from '../../defaultTLValues/defaultTLValuesEditorViewProvider';
 
 export class OpenTableDefaultsCommand extends ViewCommand {
+  constructor(
+    private config: Configuration,
+    private table: Table
+  ) {
+    super();
+  }
 
-	constructor(private config: Configuration, private table: Table) {
-		super();
-	}
+  public async execute(): Promise<void> {
+    let tableFileContent = '';
+    let tableUri: vscode.Uri;
+    if (this.table) {
+      const tableFilePath = this.table.getFilePath();
+      if (fs.existsSync(tableFilePath)) {
+        tableFileContent = await FileSystemHelper.readContentFile(tableFilePath);
+        tableUri = vscode.Uri.file(tableFilePath);
+      }
+    } else {
+      const editor = vscode?.window?.activeTextEditor;
+      if (!editor) {
+        Log.warn(`Команда открытия табличного списка была вызвана некорректно`);
+        return;
+      }
 
-	public async execute() : Promise<void> {
+      const fileName = editor?.document?.fileName;
+      if (!fileName || fileName.endsWith('.tl')) {
+        DialogHelper.showError(
+          `Нельзя открыть файл ${fileName} с как табличный список, из-за отличия его расширения файла`
+        );
+        return;
+      }
 
-		let tableFileContent = "";
-		let tableUri: vscode.Uri;
-		if(this.table) {
-			const tableFilePath = this.table.getFilePath();
-			if(fs.existsSync(tableFilePath)) {
-				tableFileContent = await FileSystemHelper.readContentFile(tableFilePath);
-				tableUri = vscode.Uri.file(tableFilePath);
-			}
-		} else {
-			const editor = vscode?.window?.activeTextEditor;
-			if (!editor) {
-				Log.warn(`Команда открытия табличного списка была вызвана некорректно`);
-				return;
-			}
+      tableFileContent = editor.document.getText();
+      tableUri = editor.document.uri;
+    }
 
-			const fileName = editor?.document?.fileName;
-			if (!fileName || fileName.endsWith(".tl")) {
-				DialogHelper.showError(`Нельзя открыть файл ${fileName} с как табличный список, из-за отличия его расширения файла`);
-				return;
-			}
-			
-			tableFileContent = editor.document.getText();
-			tableUri = editor.document.uri;
-		}
+    const yamlObject = YamlHelper.parse(tableFileContent);
+    if (yamlObject?.fillType !== 'Registry') {
+      DialogHelper.showError(
+        `Для данного типа табличных списков не поддерживается значения по умолчанию`
+      );
+      return;
+    }
 
-		const yamlObject = YamlHelper.parse(tableFileContent);
-		if(yamlObject?.fillType !== 'Registry') {
-			DialogHelper.showError(`Для данного типа табличных списков не поддерживается значения по умолчанию`);
-			return;
-		}
-
-		VsCodeApiHelper.openWith(
-			tableUri, 
-			DefaultTLValuesEditorViewProvider.viewType, {
-				preview: true
-			}
-		);
-	}
+    VsCodeApiHelper.openWith(tableUri, DefaultTLValuesEditorViewProvider.viewType, {
+      preview: true
+    });
+  }
 }

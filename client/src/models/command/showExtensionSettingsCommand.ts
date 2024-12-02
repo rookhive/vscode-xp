@@ -5,12 +5,12 @@ import { Command } from './command';
 import { VsCodeApiHelper } from '../../helpers/vsCodeApiHelper';
 
 export class ShowExtensionSettingsCommand extends Command {
-	constructor(private config: Configuration) {
-		super();
-	}
+  constructor(private config: Configuration) {
+    super();
+  }
 
-	public async execute(): Promise<boolean> {
-		VsCodeApiHelper.openExtensionSettings(this.config.getExtensionSettingsPrefix());
-		return true;
-	}
+  public async execute(): Promise<boolean> {
+    VsCodeApiHelper.openExtensionSettings(this.config.getExtensionSettingsPrefix());
+    return true;
+  }
 }

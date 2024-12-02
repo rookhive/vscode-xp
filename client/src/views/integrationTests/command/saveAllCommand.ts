@@ -9,108 +9,123 @@ import { XpException } from '../../../models/xpException';
 import { IntegrationTest } from '../../../models/tests/integrationTest';
 
 export interface SaveAllCommandParams extends RuleCommandParams {
-	testNumber: number;
-	tests : any[];
+  testNumber: number;
+  tests: any[];
 }
 
 export class SaveAllCommand extends Command {
-	constructor(private params: SaveAllCommandParams) {
-		super();
-	}
+  constructor(private params: SaveAllCommandParams) {
+    super();
+  }
 
-	public async execute(): Promise<boolean> {
-		const config = this.params.config;
+  public async execute(): Promise<boolean> {
+    const config = this.params.config;
 
-		// Номер активного теста.
-		const activeTestNumberString = this.params.testNumber;
-		if (!activeTestNumberString) {
-			// TODO: внутренняя ошибка
-			throw new XpException(`Не задан номер активного теста`);
-		}
+    // Номер активного теста.
+    const activeTestNumberString = this.params.testNumber;
+    if (!activeTestNumberString) {
+      // TODO: внутренняя ошибка
+      throw new XpException(`Не задан номер активного теста`);
+    }
 
-		// В данном руле сохраняются в памяти нормализованные события.
-		const rule = this.params.rule;
-		const newTests = await this.getNewTests();
+    // В данном руле сохраняются в памяти нормализованные события.
+    const rule = this.params.rule;
+    const newTests = await this.getNewTests();
 
-		rule.setIntegrationTests(newTests);
-		await rule.saveIntegrationTests();
+    rule.setIntegrationTests(newTests);
+    await rule.saveIntegrationTests();
 
-		DialogHelper.showInfo(config.getMessage("View.IntegrationTests.Message.TestsSavedSuccessfully"));
-		return true;
-	}
-	
-	private async getNewTests(): Promise<IntegrationTest[]> {
-		const plainTests = this.params.tests as any[];
+    DialogHelper.showInfo(
+      config.getMessage('View.IntegrationTests.Message.TestsSavedSuccessfully')
+    );
+    return true;
+  }
 
-		// Проверяем, что все тесты - нормальные
-		plainTests.forEach((plainTest, index) => {
-			// Сырые события.
-			let rawEvents = plainTest?.rawEvents;
-			rawEvents = rawEvents ? rawEvents.trim() : "";
-			if (!rawEvents || rawEvents == "") {
-				throw new XpException(this.params.config.getMessage("View.IntegrationTests.Message.SaveWithoutRawEvents", plainTest.number ?? 0));
-			}
+  private async getNewTests(): Promise<IntegrationTest[]> {
+    const plainTests = this.params.tests as any[];
 
-			// Код теста.
-			const testCode = plainTest?.testCode;
-			if (!testCode || testCode == "") {
-				throw new XpException(this.params.config.getMessage("View.IntegrationTests.Message.SaveWithoutTestCode", plainTest.number ?? 0));
-			}
-		});
+    // Проверяем, что все тесты - нормальные
+    plainTests.forEach((plainTest, index) => {
+      // Сырые события.
+      let rawEvents = plainTest?.rawEvents;
+      rawEvents = rawEvents ? rawEvents.trim() : '';
+      if (!rawEvents || rawEvents == '') {
+        throw new XpException(
+          this.params.config.getMessage(
+            'View.IntegrationTests.Message.SaveWithoutRawEvents',
+            plainTest.number ?? 0
+          )
+        );
+      }
 
-		if (!plainTests.length) {
-			return [];
-		}
+      // Код теста.
+      const testCode = plainTest?.testCode;
+      if (!testCode || testCode == '') {
+        throw new XpException(
+          this.params.config.getMessage(
+            'View.IntegrationTests.Message.SaveWithoutTestCode',
+            plainTest.number ?? 0
+          )
+        );
+      }
+    });
 
-		const oldTests = this.params.rule.getIntegrationTests();
-		const newTests = plainTests.map((plainTest, index) => {
-			const number = index + 1;
-			const newTest = IntegrationTest.create(number);
+    if (!plainTests.length) {
+      return [];
+    }
 
-			// Сырые события.
-			let rawEvents = plainTest?.rawEvents;
+    const oldTests = this.params.rule.getIntegrationTests();
+    const newTests = plainTests.map((plainTest, index) => {
+      const number = index + 1;
+      const newTest = IntegrationTest.create(number);
 
-			// Из textarea новые строки только \n, поэтому надо их поправить под систему.
-			rawEvents = rawEvents.replace(/(?<!\\)\n/gm, os.EOL);
-			newTest.setRawEvents(rawEvents);
+      // Сырые события.
+      let rawEvents = plainTest?.rawEvents;
 
-			// Код теста.
-			let testCode = plainTest?.testCode;
+      // Из textarea новые строки только \n, поэтому надо их поправить под систему.
+      rawEvents = rawEvents.replace(/(?<!\\)\n/gm, os.EOL);
+      newTest.setRawEvents(rawEvents);
 
-			// Проверяем наличие проверки ожидаемых событий
-			if(!/(\bexpect\b\s+(\d+|not))|(\bexpect\b\s+\btable_list\b)\s+{[\s\S]*?}$/gm.test(testCode)) {
-				throw new XpException(this.params.config.getMessage("View.IntegrationTests.Message.InvalidTestCode", number));
-			}
+      // Код теста.
+      let testCode = plainTest?.testCode;
 
-			// Из textarea новые строки только \n, поэтому надо их поправить под систему.
-			testCode = testCode.replace(/(?<!\\)\n/gm, os.EOL);
-			let compressedCode: string;
-			try {
-				compressedCode = TestHelper.compressTestCode(testCode);
-			}
-			catch(error) {
-				throw new XpException(this.params.config.getMessage("View.IntegrationTests.Message.InvalidJsonInTestCode"), error);
-			}
-			
-			newTest.setTestCode(compressedCode);
+      // Проверяем наличие проверки ожидаемых событий
+      if (
+        !/(\bexpect\b\s+(\d+|not))|(\bexpect\b\s+\btable_list\b)\s+{[\s\S]*?}$/gm.test(testCode)
+      ) {
+        throw new XpException(
+          this.params.config.getMessage('View.IntegrationTests.Message.InvalidTestCode', number)
+        );
+      }
 
-			// Нормализованные события.
-			const normEvents = plainTest?.normEvents;
-			if (normEvents) {
-				newTest.setNormalizedEvents(TestHelper.compressTestCode(normEvents));
-			}
+      // Из textarea новые строки только \n, поэтому надо их поправить под систему.
+      testCode = testCode.replace(/(?<!\\)\n/gm, os.EOL);
+      let compressedCode: string;
+      try {
+        compressedCode = TestHelper.compressTestCode(testCode);
+      } catch (error) {
+        throw new XpException(
+          this.params.config.getMessage('View.IntegrationTests.Message.InvalidJsonInTestCode'),
+          error
+        );
+      }
 
-			// Переносим статус из тестов до сохранения если такие же сырые события и код теста.
-			if(oldTests?.[index]) {
-				IntegrationTest.updateTestStatus(
-					oldTests[index],
-					newTest
-				);
-			}
+      newTest.setTestCode(compressedCode);
 
-			return newTest;
-		});
+      // Нормализованные события.
+      const normEvents = plainTest?.normEvents;
+      if (normEvents) {
+        newTest.setNormalizedEvents(TestHelper.compressTestCode(normEvents));
+      }
 
-		return newTests;
-	}
+      // Переносим статус из тестов до сохранения если такие же сырые события и код теста.
+      if (oldTests?.[index]) {
+        IntegrationTest.updateTestStatus(oldTests[index], newTest);
+      }
+
+      return newTest;
+    });
+
+    return newTests;
+  }
 }

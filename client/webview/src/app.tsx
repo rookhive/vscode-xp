@@ -27,7 +27,7 @@ function App() {
   return (
     <TranslationsProvider>
       <ThemeProvider>
-        <RouterProvider router={router} />;
+        <RouterProvider router={router} />
       </ThemeProvider>
     </TranslationsProvider>
   );

@@ -14,165 +14,201 @@ import { FunctionsLocalePathLocator } from '../models/locator/functionsLocalePat
  * Позволяет сформировать необходимые списки автодополнения одинаковые для всех типов контента.
  */
 export class XpCompletionItemProvider implements vscode.CompletionItemProvider {
+  constructor(private completionItems: vscode.CompletionItem[]) {}
 
-	constructor(private completionItems: vscode.CompletionItem[]) {
-	}
+  /**
+   * Считывает в память список автодополнения функций и полей таксономии.
+   * @param context контекст расширения
+   * @returns возвращает настроенный провайдер.
+   */
+  public static async init(configuration: Configuration): Promise<XpCompletionItemProvider> {
+    let autocompleteSignatures: vscode.CompletionItem[] = [];
 
-	/**
-	 * Считывает в память список автодополнения функций и полей таксономии.
-	 * @param context контекст расширения
-	 * @returns возвращает настроенный провайдер.
-	 */
-	public static async init(configuration: Configuration): Promise<XpCompletionItemProvider> {
+    // Считываем автодополнение функций.
+    const locator = new FunctionsLocalePathLocator(
+      vscode.env.language,
+      configuration.getContext().extensionPath
+    );
+    const signaturesFilePath = locator.getLocaleFilePath();
 
-		let autocompleteSignatures: vscode.CompletionItem[] = [];
+    if (!fs.existsSync(signaturesFilePath)) {
+      Log.warn(`Function description file at path ${signaturesFilePath} not found`);
+      return;
+    }
 
-		// Считываем автодополнение функций.
-		const locator = new FunctionsLocalePathLocator(vscode.env.language, configuration.getContext().extensionPath);
-		const signaturesFilePath = locator.getLocaleFilePath();
+    try {
+      const signaturesFileContent = await FileSystemHelper.readContentFile(signaturesFilePath);
+      const functionSignaturesPlain = JSON.parse(signaturesFileContent);
 
-		if(!fs.existsSync(signaturesFilePath)) {
-			Log.warn(`Function description file at path ${signaturesFilePath} not found`);
-			return;
-		}
+      if (functionSignaturesPlain) {
+        const functionsSignatures = Array.from(functionSignaturesPlain)
+          .map((s) => classTransformer.plainToInstance(CompleteSignature, s))
+          .map((s) => {
+            const ci = new vscode.CompletionItem(s.name, vscode.CompletionItemKind.Function);
+            ci.documentation = new vscode.MarkdownString(s.description);
+            return ci;
+          });
 
-		try {
-			const signaturesFileContent = await FileSystemHelper.readContentFile(signaturesFilePath);
-			const functionSignaturesPlain = JSON.parse(signaturesFileContent);
+        autocompleteSignatures = autocompleteSignatures.concat(functionsSignatures);
+      } else {
+        Log.warn('Не было считано ни одного описания функций');
+      }
+    } catch (error) {
+      DialogHelper.showError(
+        `Не удалось считать описания функций языка XP. Их автодополнение и описание параметров работать не будет.`,
+        error
+      );
+    }
 
-			if (functionSignaturesPlain) {
-				const functionsSignatures =
-					Array.from(functionSignaturesPlain)
-						.map(s => classTransformer.plainToInstance(CompleteSignature, s))
-						.map(s => {
-							const ci = new vscode.CompletionItem(s.name, vscode.CompletionItemKind.Function);
-							ci.documentation = new vscode.MarkdownString(s.description);
-							return ci;
-						});
+    try {
+      // Добавляем поля таксономии.
+      const taxonomySignatures = await TaxonomyHelper.getTaxonomyCompletions(configuration);
+      autocompleteSignatures = autocompleteSignatures.concat(taxonomySignatures);
+    } catch (error) {
+      Log.warn(
+        `Не удалось считать описания полей таксономии. Их автодополнение работать не будет.`,
+        error
+      );
+    }
 
-				autocompleteSignatures = autocompleteSignatures.concat(functionsSignatures);
-			} else {
-				Log.warn("Не было считано ни одного описания функций");
-			}
-		}
-		catch (error) {
-			DialogHelper.showError(`Не удалось считать описания функций языка XP. Их автодополнение и описание параметров работать не будет.`, error);
-		}
+    try {
+      // Добавляем ключевые слова языка.
+      const keywords = [
+        // общие логические
+        'and',
+        'or',
+        'not',
+        'with different',
+        'null',
 
-		try {
-			// Добавляем поля таксономии.
-			const taxonomySignatures = await TaxonomyHelper.getTaxonomyCompletions(configuration);
-			autocompleteSignatures = autocompleteSignatures.concat(taxonomySignatures);
-		}
-		catch (error) {
-			Log.warn(`Не удалось считать описания полей таксономии. Их автодополнение работать не будет.`, error);
-		}
+        // условия
+        'if',
+        'then',
+        'elif',
+        'else',
+        'endif',
+        'switch',
+        'endswitch',
+        'case',
 
-		try {
-			// Добавляем ключевые слова языка.
-			const keywords = [
-				// общие логические
-				"and", "or", "not", "with different", "null",
+        // общие для контента
+        'event',
+        'key',
+        'query',
+        'from',
+        'qhandler',
+        'limit',
+        'skip',
 
-				// условия
-				"if", "then", "elif", "else", "endif",
-				"switch", "endswitch", "case",
+        // агрегация
+        'aggregate',
 
-				// общие для контента
-				"event", "key",
-				"query", "from", "qhandler", "limit", "skip",
+        // корреляции
+        'rule',
+        'init',
+        'on',
+        'emit',
+        'close',
+        'within',
+        'timer',
+        'timeout_timer',
+        'as',
 
-				// агрегация
-				"aggregate",
+        'insert_into',
+        'remove_from',
+        'clear_table',
 
-				// корреляции
-				"rule", "init", "on", "emit", "close",
-				"within", "timer", "timeout_timer", "as",
+        // обогащение
+        'enrichment',
+        'enrich',
+        'enrich_fields',
 
-				"insert_into", "remove_from", "clear_table",
+        // aggregation
+        'aggregate'
+      ].map((k) => new vscode.CompletionItem(k, vscode.CompletionItemKind.Keyword));
 
-				// обогащение
-				"enrichment", "enrich", "enrich_fields",
+      autocompleteSignatures = autocompleteSignatures.concat(keywords);
 
-				// aggregation
-				"aggregate"
-			]
-				.map(k => new vscode.CompletionItem(k, vscode.CompletionItemKind.Keyword));
+      if (keywords.length == 0) {
+        Log.warn('Не было считано ни одного описания функций');
+      }
+    } catch (error) {
+      Log.warn('Ошибка при считывании: ' + error.message);
+    }
 
-			autocompleteSignatures = autocompleteSignatures.concat(keywords);
+    const completionItemProvider = new XpCompletionItemProvider(autocompleteSignatures);
+    configuration.getContext().subscriptions.push(
+      vscode.languages.registerCompletionItemProvider(
+        [
+          {
+            scheme: 'file',
+            language: 'xp'
+          },
+          {
+            scheme: 'file',
+            language: 'co'
+          },
+          {
+            scheme: 'file',
+            language: 'en'
+          },
+          {
+            scheme: 'file',
+            language: 'flt'
+          },
+          {
+            scheme: 'file',
+            language: 'agr'
+          }
+        ],
+        completionItemProvider,
+        '$'
+      )
+    );
 
-			if (keywords.length == 0) {
-				Log.warn("Не было считано ни одного описания функций");
-			}
-		}
-		catch (error) {
-			Log.warn("Ошибка при считывании: " + error.message);
-		}
+    return completionItemProvider;
+  }
 
-		const completionItemProvider = new XpCompletionItemProvider(autocompleteSignatures);
-		configuration.getContext().subscriptions.push(
-			vscode.languages.registerCompletionItemProvider(
-				[
-					{
-						scheme: 'file',
-						language: 'xp'
-					},
-					{
-						scheme: 'file',
-						language: 'co'
-					},
-					{
-						scheme: 'file',
-						language: 'en'
-					},
-					{
-						scheme: 'file',
-						language: 'flt'
-					},
-					{
-						scheme: 'file',
-						language: 'agr'
-					},
-				],
-				completionItemProvider,
-				"$"
-			)
-		);
+  public provideCompletionItems(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    token: vscode.CancellationToken,
+    context: any
+  ) {
+    // Извлекаем строку без пробелов до текущего токена.
+    const lineText = document.lineAt(position.line).text;
 
-		return completionItemProvider;
-	}
+    const firstNonWhitespaceCharacterIndex = document.lineAt(
+      position.line
+    ).firstNonWhitespaceCharacterIndex;
+    const lastAutocompleteWordIndex = position.character;
+    const prevText = lineText.substring(
+      firstNonWhitespaceCharacterIndex,
+      lastAutocompleteWordIndex
+    );
 
-	public provideCompletionItems(
-		document: vscode.TextDocument,
-		position: vscode.Position,
-		token: vscode.CancellationToken,
-		context: any) {
+    // Выделяем токен.
+    const parseResult = /\b([a-z0-9.]+)$/g.exec(prevText);
+    if (!parseResult || parseResult.length != 2) {
+      return this.completionItems;
+    }
 
-		// Извлекаем строку без пробелов до текущего токена.
-		const lineText = document.lineAt(position.line).text;
-		
-		const firstNonWhitespaceCharacterIndex = document.lineAt(position.line).firstNonWhitespaceCharacterIndex;
-		const lastAutocompleteWordIndex = position.character;
-		const prevText = lineText.substring(firstNonWhitespaceCharacterIndex, lastAutocompleteWordIndex);
+    const unendedToken = parseResult[1];
+    const filteredItems = this.completionItems.filter((ci) =>
+      ci.label.toString().startsWith(unendedToken)
+    );
 
-		// Выделяем токен.
-		const parseResult = /\b([a-z0-9.]+)$/g.exec(prevText);
-		if(!parseResult || parseResult.length != 2) {
-			return this.completionItems;
-		}
+    // Вставлять будем только окончание, вместо полного item-а.
+    // const wordRange = document.getWordRangeAtPosition(position);
+    // const word = document.getText(wordRange);
 
-		const unendedToken = parseResult[1];
-		const filteredItems = this.completionItems.filter(ci => ci.label.toString().startsWith(unendedToken));
+    for (const filteredItem of filteredItems) {
+      const unendedTokenWithoutLastChar = unendedToken.slice(0, -1);
+      filteredItem.insertText = filteredItem.label
+        .toString()
+        .replace(unendedTokenWithoutLastChar, '');
+    }
 
-		// Вставлять будем только окончание, вместо полного item-а.
-		// const wordRange = document.getWordRangeAtPosition(position);
-		// const word = document.getText(wordRange);
-		
-		for (const filteredItem of filteredItems) {
-			const unendedTokenWithoutLastChar = unendedToken.slice(0, -1);
-			filteredItem.insertText = filteredItem.label.toString().replace(unendedTokenWithoutLastChar, "");
-		}
-
-		return filteredItems;
-	}
+    return filteredItems;
+  }
 }

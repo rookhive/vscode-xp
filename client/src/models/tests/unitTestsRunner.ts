@@ -1,12 +1,9 @@
 import { BaseUnitTest } from './baseUnitTest';
 
 export class UnitTestOptions {
-	useAppendix?: boolean = false;
+  useAppendix?: boolean = false;
 }
 
 export interface UnitTestRunner {
-	run(
-		unitTest: BaseUnitTest,
-		options?: UnitTestOptions
-	): Promise<BaseUnitTest>;
+  run(unitTest: BaseUnitTest, options?: UnitTestOptions): Promise<BaseUnitTest>;
 }
