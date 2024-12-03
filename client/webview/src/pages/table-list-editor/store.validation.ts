@@ -160,7 +160,7 @@ export const validation = {
       if (!isColumnNullable || (value !== '' && value != null)) {
         switch (column.data.type) {
           case 'Number':
-            if (!/^\d+$/g.test(value)) {
+            if (!/^-?\d+(\.\d+)?$/g.test(value)) {
               throw Error(translations.IncorrectNumberFormat);
             }
             break;

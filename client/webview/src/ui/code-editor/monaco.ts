@@ -14,7 +14,7 @@ export const initMonaco = (monaco: Monaco) => {
     tokenizer: {
       root: [
         [/#.*$/, 'comment'],
-        [/\d+/, 'number'],
+        [/-?\d+(\.\d+)?/, 'number'],
         [/".*?"/, 'string'],
         [/\b(true|false|null)\b/, 'constant'],
         [/\b(not|expect|table_list|default)\b/, 'keyword']
