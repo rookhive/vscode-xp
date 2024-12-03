@@ -36,10 +36,8 @@ export class RetroCorrelationViewController extends BaseWebViewController {
     const createCorrelationTemplateFilePath = path.join(
       config.getExtensionPath(),
       'client',
-      'src',
-      'views',
-      'retroCorrelation',
-      'retroCorrelation.html'
+      'templates',
+      'RetroCorrelation.html'
     );
     const createCorrelationTemplateContent = (
       await fs.promises.readFile(createCorrelationTemplateFilePath)
