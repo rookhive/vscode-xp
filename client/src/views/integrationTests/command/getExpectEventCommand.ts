@@ -21,16 +21,14 @@ import { Enrichment } from '../../../models/content/enrichment';
 export class GetExpectedEventCommand {
   constructor(private params: IntegrationTestParams) {}
 
-  public async execute(viewProvider: IntegrationTestEditorViewProvider): Promise<boolean> {
+  public async execute(
+    viewProvider: IntegrationTestEditorViewProvider,
+    testNumber: number
+  ): Promise<boolean> {
     const testWithNewTestCode = await this.generateTestCode();
 
     if (testWithNewTestCode) {
-      await viewProvider.updateTestCode(
-        this.params.test.getTestCode()
-        // ,
-        // TODO: добавить конкретный тест для обновления, иначе может быть обновлен не тот тест.
-        // testWithNewTestCode.getNumber()
-      );
+      await viewProvider.updateTestCode(this.params.test.getTestCode(), testNumber);
     }
 
     DialogHelper.showInfo(

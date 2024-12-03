@@ -153,7 +153,6 @@ export class IntegrationTestEditorViewProvider {
     await this.updateView();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async onExternalTestFilesModification(uri: vscode.Uri): Promise<void> {
     // TODO: не всегда корректно обрабатывает, отключено до решения данной проблемы
     return;
@@ -481,7 +480,7 @@ export class IntegrationTestEditorViewProvider {
             tmpDirPath: this.testsTmpFilesPath
           });
 
-          await command.execute(this);
+          await command.execute(this, selectedTestNumber);
           return true;
         } catch (error) {
           ExceptionHelper.show(error, 'Ошибка обновления ожидаемого события');

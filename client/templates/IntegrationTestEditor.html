@@ -479,13 +479,13 @@
 
 							let baseTestElement;
 							const testNumberString = message.testNumber;
+
 							if(!testNumberString) {
 								// Получаем текущий тест.
 								const activeTestNumber = $("#active_test_number").val();
 								baseTestElement = $("#" + activeTestNumber); 
 							} else {
-								const testNumber = parseInt(testNumberString);
-								baseTestElement = $("#" + activeTestNumber); 
+								baseTestElement = $("#" + testNumberString);
 							}
 
 							// Задаем новое значение сырых событий.
