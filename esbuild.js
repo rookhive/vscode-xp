@@ -23,13 +23,13 @@ const clientConfig = {
   ]
 };
 
-// const uiConfig = {
-//   ...baseConfig,
-//   target: 'es2020',
-//   format: 'esm',
-//   entryPoints: ['./client/src/uiToolkit/ui.ts'],
-//   outfile: './client/out/ui.js'
-// };
+const uiConfig = {
+  ...baseConfig,
+  target: 'es2020',
+  format: 'esm',
+  entryPoints: ['./client/src/uiToolkit/ui.ts'],
+  outfile: './client/out/ui.js'
+};
 
 const serverConfig = {
   ...baseConfig,
@@ -68,10 +68,10 @@ const watchConfig = {
         ...clientConfig,
         ...watchConfig
       });
-      // await build({
-      //   ...uiConfig,
-      //   ...watchConfig
-      // });
+      await build({
+        ...uiConfig,
+        ...watchConfig
+      });
       await build({
         ...serverConfig,
         ...watchConfig
@@ -82,8 +82,8 @@ const watchConfig = {
     } else {
       await build(clientConfig);
       console.log('\x1b[32m✓ \x1b[34mclient \x1b[37mbuild \x1b[32mcomplete\x1b[0m');
-      // await build(uiConfig);
-      // console.log('\x1b[32m✓ \x1b[35mui-toolkit \x1b[37mbuild \x1b[32mcomplete\x1b[0m');
+      await build(uiConfig);
+      console.log('\x1b[32m✓ \x1b[35mui-toolkit \x1b[37mbuild \x1b[32mcomplete\x1b[0m');
       await build(serverConfig);
       console.log('\x1b[32m✓ \x1b[36mserver \x1b[37mbuild \x1b[32mcomplete\x1b[0m');
     }
