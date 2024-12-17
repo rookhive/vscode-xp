@@ -11,30 +11,40 @@ import SourcesAndTactics from '../sources-and-tactics/sources-and-tactics';
 import styles from './editor.module.scss';
 
 function Editor() {
-  const { isGeneralEditorValid } = useEditor();
+  const {
+    isGeneralEditorValid,
+    data: { dependencies }
+  } = useEditor();
   const translations = useTranslations();
 
   const tabsData = useMemo(
-    () => [
-      {
-        id: 'general',
-        label: translations.GeneralTab,
-        element: <GeneralSettings />,
-        isInvalid: !isGeneralEditorValid
-      },
-      {
-        id: 'sources-and-tactics',
-        label: translations.SourcesAndTacticsTab,
-        element: <SourcesAndTactics />
-      },
-      {
-        id: 'dependencies',
-        label: translations.DependenciesTab,
-        element: <Dependencies />
+    () => {
+      const tabs = [
+        {
+          id: 'general',
+          label: translations.GeneralTab,
+          element: <GeneralSettings />,
+          isInvalid: !isGeneralEditorValid
+        },
+        {
+          id: 'sources-and-tactics',
+          label: translations.SourcesAndTacticsTab,
+          element: <SourcesAndTactics />
+        }
+      ];
+
+      if (dependencies) {
+        tabs.push({
+          id: 'dependencies',
+          label: translations.DependenciesTab,
+          element: <Dependencies />
+        });
       }
-    ],
+
+      return tabs;
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isGeneralEditorValid]
+    [dependencies, isGeneralEditorValid]
   );
 
   return (
