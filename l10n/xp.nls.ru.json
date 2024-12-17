@@ -256,7 +256,7 @@
     "View.CreateRule.Template": "Шаблон",
     "View.CreateRule.NameLabel": "Название",
 
-    "View.UnitTests.EditorTitle": "Редактор юнит теста",
+    "View.UnitTests.EditorTitle": "Редактор модульного теста",
     "View.UnitTests.Run": "Запустить",
     "View.UnitTests.WordWrap": "Переносить по словам",
     "View.UnitTests.ActualResult" : "Фактический результат",
