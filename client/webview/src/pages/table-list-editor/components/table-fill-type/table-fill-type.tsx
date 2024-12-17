@@ -3,8 +3,8 @@ import { useTranslations } from '~/hooks/use-translations';
 import { TableListFillType } from '~/types';
 import Label from '~/ui/label/label';
 import Select from '~/ui/select/select';
+import SettingBox from '~/ui/setting-box/setting-box';
 import { useActions, useEditor } from '../../store';
-import SettingBox from '../setting-box/setting-box';
 import TableFillTypeSettings from './table-fill-type-settings';
 
 function TableFillType() {

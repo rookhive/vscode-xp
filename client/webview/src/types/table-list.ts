@@ -1,4 +1,4 @@
-// The form in which the backend sends the table list data
+// The form in which the extension sends the table list data
 export type TableListDto = {
   name: string;
   type: number;

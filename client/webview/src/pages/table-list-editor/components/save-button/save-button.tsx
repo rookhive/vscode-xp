@@ -19,7 +19,7 @@ function SaveButton() {
   };
 
   return (
-    <Button isDisabled={!isEditorValid} onClick={isEditorValid ? handleSubmit : undefined}>
+    <Button isDisabled={!isEditorValid} onClick={handleSubmit}>
       <Icon id="save" />
       {translations.Save}
     </Button>

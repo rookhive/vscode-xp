@@ -59,6 +59,7 @@
 	"xp.xpConfig.origin.enDescription": "Отображаемое имя (EN)",
 	"xp.xpConfig.origin.idDescription": "GUID поставщика (глобальный уникальный идентификатор)",
 
-	"xp.xpConfig.logLevelDescription": "Уровень журналирования"
+	"xp.xpConfig.logLevelDescription": "Уровень журналирования",
+	"xp.xpConfig.defaultAuthor": "Имя автора по умолчанию"
 }
 

@@ -1,27 +1,63 @@
 .root {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  padding: 0;
+  position: relative;
+  width: min(320px, 100%);
+  min-height: 26px;
+  padding: 2px 6px;
+  background-color: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, transparent);
   border-radius: 2px;
-  background-color: var(--vscode-settings-textInputBackground);
-  min-height: 60px;
+  outline-offset: -1px;
+  color: var(--vscode-input-foreground);
 
   &.isFocused {
-    opacity: 1;
-    outline-color: var(--vscode-focusBorder);
-    outline-offset: -1px;
-    outline-style: solid;
-    outline-width: 1px;
+    color: var(--vscode-input-foreground);
+    outline: 1px solid var(--vscode-focusBorder);
+  }
+
+  &.isInvalid {
+    background-color: var(--vscode-inputValidation-errorBackground);
+    border: 1px solid var(--vscode-inputValidation-errorBorder);
+    outline-color: var(--vscode-inputValidation-errorBorder);
+    color: var(--vscode-inputValidation-errorForeground);
+  }
+
+  &.isDisabled {
+    opacity: 0.4;
+    cursor: default;
   }
 }
 
-.input {
-  flex-grow: 1;
+.textarea {
   width: 100%;
-  height: 100%;
-  padding: 4px 6px;
-  border: 1px solid var(--vscode-settings-textInputBorder);
-  color: var(--vscode-settings-textInputForeground);
+  margin: 0;
+  padding: 0;
+  border: none;
   outline: none;
+  background-color: transparent;
+  font-size: 13px;
+  line-height: 1.4em;
+  color: inherit;
+  resize: none;
+
+  &::placeholder {
+    color: var(--vscode-input-placeholderForeground);
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.newLineIcon {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  height: 26px;
+  width: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  opacity: 0.6;
+  pointer-events: none;
 }

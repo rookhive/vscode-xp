@@ -4,14 +4,19 @@
 
   display: none;
   position: absolute;
-  max-width: 400px;
-  animation: 0.1s fadeIn 0.3s linear forwards;
+  flex-direction: column;
+  min-height: 0;
+  animation: 0.2s fadeIn linear forwards;
   pointer-events: none;
   opacity: 0;
   z-index: 999;
 
+  &.isInteractive {
+    pointer-events: auto;
+  }
+
   &.isError {
-    .content {
+    .inner {
       background-color: var(--vscode-inputValidation-errorBackground);
       border: 1px solid var(--vscode-inputValidation-errorBorder);
       outline-color: var(--vscode-inputValidation-errorBorder);
@@ -25,16 +30,16 @@
   }
 
   &.isShown {
-    display: block;
+    display: flex;
   }
 
   &.top {
-    margin-top: -6px;
+    padding-bottom: 6px;
 
     .pointer {
       bottom: 0;
       left: 50%;
-      transform: translate(-50%, 2.5px);
+      transform: translate(-50%, 3.5px);
       margin-left: var(--pointer-offset);
 
       &::after {
@@ -44,12 +49,12 @@
   }
 
   &.bottom {
-    margin-top: 6px;
+    padding-top: 6px;
 
     .pointer {
       top: 0;
       left: 50%;
-      transform: translate(-50%, -2.5px);
+      transform: translate(-50%, -3.5px);
       margin-left: var(--pointer-offset);
 
       &::after {
@@ -59,22 +64,34 @@
   }
 }
 
-.content {
+.inner {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  min-width: fit-content;
+  height: 100%;
+  min-height: 0;
   background: var(--vscode-editorHoverWidget-background);
   border: 1px solid var(--vscode-editorHoverWidget-border);
   border-radius: 3px;
   box-shadow: 0 2px 8px var(--vscode-widget-shadow);
+  cursor: default;
+}
+
+.content {
+  position: relative;
+  height: 100%;
   padding: 2px 8px;
+  background-color: inherit;
+  border-radius: inherit;
   font-size: 13px;
   line-height: 19px;
   font-size: 12px;
   word-wrap: break-word;
   white-space: normal;
   color: var(--vscode-editorHoverWidget-foreground);
-  cursor: default;
+  overflow: auto;
+  z-index: 3;
 }
 
 .pointer {

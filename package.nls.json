@@ -59,6 +59,7 @@
 	"xp.xpConfig.origin.enDescription": "Display name (EN)",
 	"xp.xpConfig.origin.idDescription": "Vendor GUID (global unique identifier)",
 
-	"xp.xpConfig.logLevelDescription": "Log level"
+	"xp.xpConfig.logLevelDescription": "Log level",
+	"xp.xpConfig.defaultAuthor": "Default author name"
 }
 

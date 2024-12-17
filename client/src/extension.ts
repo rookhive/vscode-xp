@@ -35,7 +35,6 @@ import { Logger } from './logger';
 import { RetroCorrelationViewController } from './views/retroCorrelation/retroCorrelationViewProvider';
 import { XpHoverProvider } from './providers/xpHoverProvider';
 import { UserSettingsManager as UserSettingsManager } from './models/content/userSettingsManager';
-import { DefaultTLValuesEditorViewProvider } from './views/defaultTLValues/defaultTLValuesEditorViewProvider';
 import { LocalizationEditorViewProvider } from './views/localization/localizationEditorViewProvider';
 import { CommonCommands } from './models/command/commonCommands';
 import { ToolsManager } from './models/content/toolsManager';
@@ -141,18 +140,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
     InitKBRootCommand.init(config);
     RetroCorrelationViewController.init(config);
     CommonCommands.init(config);
-
-    const templateFilePath = path.join(
-      config.getExtensionPath(),
-      'client',
-      'templates',
-      'TableListEditor',
-      'html',
-      'TableListEditor.html'
-    );
-    context.subscriptions.push(
-      DefaultTLValuesEditorViewProvider.register(context, templateFilePath, config)
-    );
 
     siemCustomPackingTaskProvider = vscode.tasks.registerTaskProvider(
       XPPackingTaskProvider.Type,

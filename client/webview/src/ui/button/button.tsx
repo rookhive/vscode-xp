@@ -17,7 +17,7 @@ function Button({ children, className, variant = 'primary', isDisabled, onClick 
       className={clsx(styles.root, className)}
       secondary={isSecondary}
       disabled={isDisabled}
-      onClick={onClick}
+      onClick={isDisabled ? undefined : onClick}
     >
       {children}
     </VscodeButton>

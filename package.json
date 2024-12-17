@@ -814,6 +814,11 @@
           "default": "Info",
           "description": "%xp.xpConfig.logLevelDescription%"
         },
+        "xpConfig.author": {
+          "type": "string",
+          "default": "",
+          "description": "%xp.xpConfig.defaultAuthor%"
+        },
         "languageServer.maxNumberOfProblems": {
           "scope": "resource",
           "type": "number",
@@ -836,16 +841,18 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "node ./esbuild.js && npm run build:webview",
+    "compile": "node ./esbuild.js && npm run build:webview && npm run mitre-attack:parse",
     "package": "set NODE_ENV=development && node ./esbuild.js",
     "watch": "node ./esbuild.js --watch",
     "tswatch": "tsc -b -w",
-    "postinstall": "cd ./client && npm install && cd .. && cd ./server && npm install && cd ../client/webview && npm install && npm run build",
+    "postinstall": "cd ./client && npm install && cd .. && cd ./server && npm install && cd ../client/webview && npm install",
     "pretest": "tsc -b",
     "build:webview": "cd ./client/webview/ && npm run build",
     "watch:webview": "cd ./client/webview/ && npm run dev",
     "lint": "eslint {client,server}/**",
-    "format": "prettier {client,server}/**/*.{js,ts,jsx,tsx,css,scss} --write"
+    "format": "prettier {client,server}/**/*.{js,ts,jsx,tsx,css,scss} --write",
+    "mitre-attack:fetch": "node ./mitre_attack/fetchMitreAttackData.js",
+    "mitre-attack:parse": "node ./mitre_attack/parseMitreAttackData.js"
   },
   "devDependencies": {
     "@types/diff": "^5.0.3",
@@ -855,16 +862,16 @@
     "@types/mocha": "^8.2.2",
     "@types/mustache": "4.1.0",
     "@types/node": "^22.10.1",
-    "@typescript-eslint/eslint-plugin": "^8.16.0",
-    "@typescript-eslint/parser": "^8.16.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.1",
+    "@typescript-eslint/parser": "^8.18.1",
     "esbuild": "^0.24.0",
     "esbuild-plugin-clean": "^1.0.1",
-    "eslint": "^9.15.0",
+    "eslint": "^9.17.0",
     "eslint-config-prettier": "^9.1.0",
-    "globals": "^15.12.0",
+    "globals": "^15.13.0",
     "jest": "^29.7.0",
     "mocha": "^9.2.2",
-    "prettier": "^3.4.1",
+    "prettier": "^3.4.2",
     "prettier-plugin-organize-imports": "^4.1.0",
     "typescript": "^5.7.2"
   },

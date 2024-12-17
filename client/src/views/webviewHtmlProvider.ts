@@ -34,6 +34,7 @@ class WebviewHtmlProvider {
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <script type="module">
             window.__webview = {
+              extensionRootUri: ${JSON.stringify(extensionBaseUri)},
               initialPage: ${JSON.stringify(pageName)},
               translations: ${JSON.stringify(translations)},
               monacoEditorConfiguration: ${JSON.stringify(configuration.editor)},

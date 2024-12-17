@@ -1,3 +1,31 @@
+// Transforms the date object into a formatted string
+//
+// d - day
+// y - year
+// m - month
+// H - hour
+// M - minute
+// S - second
+//
+// Examples:
+// formatDate(new Date(), 'd.m.y') // '22.12.1955'
+// formatDate(new Date(), 'm-y_d H:M:S') // '12-1955_22 04:05:13'
+export const formatDate = (date: Date, mask = 'y-m-d H:M:S') => {
+  const map: Record<string, number> = {
+    d: date.getDate(),
+    m: date.getMonth() + 1,
+    y: date.getFullYear(),
+    H: date.getHours(),
+    M: date.getMinutes(),
+    S: date.getSeconds()
+  };
+
+  return mask
+    .split('')
+    .map((char) => (map[char] != null ? String(map[char]).padStart(2, '0') : char))
+    .join('');
+};
+
 export const isObjectEmpty = (object: Record<string, unknown>) => Object.keys(object).length === 0;
 export const isNumberInRange = (n: number, min: number, max: number) => n >= min && n <= max;
 

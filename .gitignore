@@ -6,3 +6,5 @@ client/server
 Build/
 contract
 *.tsbuildinfo
+
+mitre_attack/data/parsed

@@ -9,10 +9,12 @@ import './styles/index.scss';
 
 const UnitTestEditor = lazy(() => import('./pages/unit-test-editor'));
 const TableListEditor = lazy(() => import('./pages/table-list-editor'));
+const MetaInfoEditor = lazy(() => import('./pages/meta-info-editor'));
 
 const routes: ({ path: `/${PageName}` } & RouteObject)[] = [
   { path: '/unit-test-editor', element: <UnitTestEditor /> },
-  { path: '/table-list-editor', element: <TableListEditor /> }
+  { path: '/table-list-editor', element: <TableListEditor /> },
+  { path: '/meta-info-editor', element: <MetaInfoEditor /> }
 ];
 
 const router = createMemoryRouter(routes, { initialEntries: [`/${window.__webview.initialPage}`] });

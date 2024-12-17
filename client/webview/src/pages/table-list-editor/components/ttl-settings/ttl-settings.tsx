@@ -3,9 +3,10 @@ import { useSnapshot } from 'valtio';
 import { useTranslations } from '~/hooks/use-translations';
 import Checkbox from '~/ui/checkbox/checkbox';
 import Label from '~/ui/label/label';
+import SettingBox from '~/ui/setting-box/setting-box';
 import Textfield from '~/ui/textfield/textfield';
+import Tooltip from '~/ui/tooltip/tooltip';
 import { state, useActions, useEditor } from '../../store';
-import SettingBox from '../setting-box/setting-box';
 import styles from './ttl-settings.module.scss';
 
 function TTLSettings() {
@@ -16,11 +17,32 @@ function TTLSettings() {
   const { setTTL, parseTTL, toggleTTLUse } = useActions();
   const errors = useSnapshot(state.errors.general);
   const [isTTLUsed, setIsTTLUsed] = useState(!!ttl);
-  const [days, hours, minutes] = useMemo(() => parseTTL(ttl!), [ttl, parseTTL]);
+  const [_days, _hours, _minutes] = useMemo(() => parseTTL(ttl!), [ttl, parseTTL]);
+  const [days, setDays] = useState(_days);
+  const [hours, setHours] = useState(_hours);
+  const [minutes, setMinutes] = useState(_minutes);
 
   const handleTTLUse = (isTTLUsed: boolean) => {
     toggleTTLUse(isTTLUsed);
     setIsTTLUsed(isTTLUsed);
+  };
+
+  const handleSetDays = (_days: string) => {
+    const days = Number(_days || 0);
+    setTTL(days, hours, minutes);
+    setDays(days);
+  };
+
+  const handleSetHours = (_hours: string) => {
+    const hours = Number(_hours || 0);
+    setTTL(days, hours, minutes);
+    setHours(hours);
+  };
+
+  const handleSetMinutes = (_minutes: string) => {
+    const minutes = Number(_minutes || 0);
+    setTTL(days, hours, minutes);
+    setMinutes(minutes);
   };
 
   return (
@@ -33,35 +55,41 @@ function TTLSettings() {
           onChange={() => handleTTLUse(!isTTLUsed)}
         />
         <div className={styles.form}>
-          <Textfield
-            type="number"
-            min={0}
-            max={90}
-            value={days}
-            isDisabled={!isTTLUsed}
-            errorMessage={errors.ttlDays || errors.ttl}
-            onChange={(days) => setTTL(Number(days || 0), hours, minutes)}
-          />
+          <Tooltip title={errors.ttlDays || errors.ttl} variant="error">
+            <Textfield
+              type="number"
+              min={0}
+              max={90}
+              value={days}
+              isDisabled={!isTTLUsed}
+              isInvalid={!!(errors.ttlDays || errors.ttl)}
+              onChange={handleSetDays}
+            />
+          </Tooltip>
           <span>{translations.TTLDays}</span>
-          <Textfield
-            type="number"
-            min={0}
-            max={23}
-            value={hours}
-            isDisabled={!isTTLUsed}
-            errorMessage={errors.ttlHours || errors.ttl}
-            onChange={(hours) => setTTL(days, Number(hours || 0), minutes)}
-          />
+          <Tooltip title={errors.ttlHours || errors.ttl} variant="error">
+            <Textfield
+              type="number"
+              min={0}
+              max={23}
+              value={hours}
+              isDisabled={!isTTLUsed}
+              isInvalid={!!(errors.ttlHours || errors.ttl)}
+              onChange={handleSetHours}
+            />
+          </Tooltip>
           <span>{translations.TTLHours}</span>
-          <Textfield
-            type="number"
-            min={0}
-            max={59}
-            value={minutes}
-            isDisabled={!isTTLUsed}
-            errorMessage={errors.ttlMinutes || errors.ttl}
-            onChange={(minutes) => setTTL(days, hours, Number(minutes || 0))}
-          />
+          <Tooltip title={errors.ttlMinutes || errors.ttl} variant="error">
+            <Textfield
+              type="number"
+              min={0}
+              max={59}
+              value={minutes}
+              isDisabled={!isTTLUsed}
+              isInvalid={!!(errors.ttlMinutes || errors.ttl)}
+              onChange={handleSetMinutes}
+            />
+          </Tooltip>
           <span>{translations.TTLMinutes}</span>
         </div>
       </div>

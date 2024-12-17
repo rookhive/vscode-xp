@@ -1,8 +1,8 @@
 import { useTranslations } from '~/hooks/use-translations';
 import Label from '~/ui/label/label';
+import SettingBox from '~/ui/setting-box/setting-box';
 import Textarea from '~/ui/textarea/textarea';
 import { useActions, useEditor } from '../../store';
-import SettingBox from '../setting-box/setting-box';
 import styles from './table-description.module.scss';
 
 interface TableDescriptionProps {

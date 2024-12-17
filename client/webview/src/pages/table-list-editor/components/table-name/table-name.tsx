@@ -2,9 +2,10 @@ import { memo } from 'react';
 import { useSnapshot } from 'valtio';
 import { useTranslations } from '~/hooks/use-translations';
 import Label from '~/ui/label/label';
+import SettingBox from '~/ui/setting-box/setting-box';
 import Textfield from '~/ui/textfield/textfield';
+import Tooltip from '~/ui/tooltip/tooltip';
 import { state, useActions, useEditor } from '../../store';
-import SettingBox from '../setting-box/setting-box';
 
 function TableName() {
   const {
@@ -17,7 +18,9 @@ function TableName() {
   return (
     <SettingBox>
       <Label isRequired>{translations.Name}</Label>
-      <Textfield isRequired value={name} onChange={setName} errorMessage={errors.tableName} />
+      <Tooltip title={errors.tableName} variant="error" position="bottom">
+        <Textfield value={name} isInvalid={!!errors.tableName} onChange={setName} />
+      </Tooltip>
     </SettingBox>
   );
 }

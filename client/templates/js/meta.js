@@ -110,7 +110,7 @@ function saveMetaInfo() {
 
 
 	vscode.postMessage({
-		command: 'saveMetaInfo',
+		command: 'MetaInfoEditor.saveMetaInfo',
 		metainfo: {
 			'Name': newName,
 			'ObjectId': newObjectId,

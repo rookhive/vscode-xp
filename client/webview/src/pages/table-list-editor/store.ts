@@ -1,5 +1,6 @@
 import { proxy, useSnapshot } from 'valtio';
 import {
+  StateErrors,
   type DefaultsKey,
   type TableColumn,
   type TableColumnData,
@@ -22,19 +23,15 @@ const SECONDS_IN_MINUTE = 60;
 const SECONDS_IN_HOUR = SECONDS_IN_MINUTE * 60;
 const SECONDS_IN_DAY = SECONDS_IN_HOUR * 24;
 
-type ErrorID = string;
-type ErrorMessage = string;
-type Errors = Record<ErrorID, ErrorMessage>;
-
 type State = {
   data: TableList;
   searchString: string;
   errors: {
-    general: Errors;
-    columns: Errors;
+    general: StateErrors;
+    columns: StateErrors;
     defaults: {
-      PT: Errors;
-      LOC: Errors;
+      PT: StateErrors;
+      LOC: StateErrors;
     };
   };
   isGeneralEditorValid: boolean;
@@ -137,6 +134,7 @@ const actions = {
       validation.validateTTL(ttl);
     }
   },
+
   parseTTL(ttl: number) {
     const days = Math.floor((ttl || 0) / SECONDS_IN_DAY);
     const hours = Math.floor(((ttl || 0) % SECONDS_IN_DAY) / SECONDS_IN_HOUR);

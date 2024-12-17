@@ -33,7 +33,7 @@ function ColumnsTable() {
 
   const primaryKeyHeaderCell = (
     <Label>
-      <Icon id="key" /> {translations.PrimaryKey}
+      <Icon id="key" size={14} /> {translations.PrimaryKey}
     </Label>
   );
 

@@ -80,7 +80,7 @@ function DefaultsTable({ defaultsKey }: DefaultsTableProps) {
             {columns.map((column) => {
               const renderedCell = (
                 <Label>
-                  {column.data.primaryKey && <Icon id="key" />} {column.name}{' '}
+                  {column.data.primaryKey && <Icon id="key" size={14} />} {column.name}{' '}
                   <CodeSpan>{column.data.type.toLowerCase()}</CodeSpan>
                 </Label>
               );

@@ -23,19 +23,19 @@ function Editor() {
     () => [
       {
         id: 'general',
-        label: translations.General,
+        label: translations.GeneralTab,
         element: <GeneralSettings />,
         isInvalid: !isGeneralEditorValid
       },
       {
         id: 'columns-editor',
-        label: translations.Columns,
+        label: translations.ColumnsTab,
         element: <ColumnsTable />,
         isInvalid: !isColumnsEditorValid
       },
       {
         id: 'defaults-editor',
-        label: translations.DefaultValues,
+        label: translations.DefaultValuesTab,
         element: <DefaultsTableEditor />,
         isInvalid: !isDefaultsEditorValid,
         isDisabled: !isRegistry || !isColumnsEditorValid

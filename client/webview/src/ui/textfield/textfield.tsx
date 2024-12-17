@@ -1,6 +1,5 @@
 import clsx from 'clsx';
-import { useEffect, useState } from 'react';
-import Tooltip from '../tooltip/tooltip';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import styles from './textfield.module.scss';
 
 interface TextfieldProps extends React.PropsWithChildren {
@@ -10,61 +9,83 @@ interface TextfieldProps extends React.PropsWithChildren {
   max?: number;
   value?: string | number;
   placeholder?: string;
-  isRequired?: boolean;
+  autoFocus?: boolean;
   isDisabled?: boolean;
   isInvalid?: boolean;
   errorMessage?: string;
   onChange(value: string): void;
-  onValidate?(value: string): { isValid: boolean; errorMessage?: string };
+  onSubmit?(value: string): void;
+  onBlur?(value: string): void;
 }
 
-function Textfield({
-  className,
-  type = 'text',
-  min,
-  max,
-  value = '',
-  placeholder = '',
-  isDisabled = false,
-  isInvalid: isInvalidControlled = false,
-  errorMessage,
-  onChange
-}: TextfieldProps) {
-  const [isFocused, setIsFocused] = useState(false);
-  const [innerValue, setInnerValue] = useState(value);
-  const isInvalid = !!errorMessage;
+const Textfield = forwardRef<HTMLDivElement, TextfieldProps>(
+  (
+    {
+      className,
+      type = 'text',
+      min,
+      max,
+      value = '',
+      placeholder = '',
+      autoFocus,
+      isDisabled = false,
+      isInvalid = false,
+      onChange,
+      onSubmit,
+      onBlur
+    },
+    ref
+  ) => {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const [isFocused, setIsFocused] = useState(false);
+    const [innerValue, setInnerValue] = useState(value);
 
-  useEffect(() => {
-    setInnerValue(value);
-  }, [value]);
+    useEffect(() => {
+      setInnerValue(value);
+    }, [value]);
 
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.currentTarget;
-    setInnerValue(value);
-    onChange(value);
-  };
+    const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { value } = e.currentTarget;
+      setInnerValue(value);
+      onChange(value);
+    };
 
-  const handleFocus = () => {
-    setIsFocused(true);
-  };
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (onSubmit && e.key == 'Enter') {
+        onSubmit(e.currentTarget.value);
+        return;
+      }
+    };
 
-  const handleBlur = () => {
-    setIsFocused(false);
-  };
+    const handleFocus = () => {
+      setIsFocused(true);
+    };
 
-  return (
-    <Tooltip title={errorMessage} variant="error">
+    const handleBlur = () => {
+      setIsFocused(false);
+      onBlur?.(String(innerValue));
+    };
+
+    useEffect(() => {
+      if (autoFocus) {
+        inputRef.current?.focus();
+      }
+    }, [autoFocus]);
+
+    return (
       <div
+        ref={ref}
         className={clsx(
           className,
           styles.root,
           isFocused && styles.isFocused,
-          (isInvalidControlled || isInvalid) && styles.isInvalid,
+          isInvalid && styles.isInvalid,
           isDisabled && styles.isDisabled
         )}
       >
         <input
           title=""
+          ref={inputRef}
           className={styles.input}
           disabled={isDisabled}
           value={innerValue}
@@ -73,12 +94,13 @@ function Textfield({
           min={min}
           max={max}
           onChange={handleInput}
+          onKeyDown={handleKeyDown}
           onFocus={handleFocus}
           onBlur={handleBlur}
         />
       </div>
-    </Tooltip>
-  );
-}
+    );
+  }
+);
 
 export default Textfield;

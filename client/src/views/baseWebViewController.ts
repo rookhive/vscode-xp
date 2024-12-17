@@ -44,7 +44,7 @@ export abstract class BaseWebViewController {
         this.webView = undefined;
       });
 
-      this.webView.webview.html = this.renderHtml();
+      this.webView.webview.html = await this.renderHtml();
     } catch (error) {
       ExceptionHelper.show(error, `Не удалось открыть ${this.getTitle()}`);
     }
@@ -65,7 +65,7 @@ export abstract class BaseWebViewController {
   /**
    * Получает верстку для отображения webView
    */
-  protected abstract renderHtml(): string;
+  protected abstract renderHtml(): string | Promise<string>;
 
   /**
    * Выполняется перед отображением вьюшки.

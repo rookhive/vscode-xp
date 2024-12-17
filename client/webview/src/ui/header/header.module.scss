@@ -10,9 +10,10 @@
   h1 {
     font-weight: 600;
     font-size: 20px;
-    line-height: 20px;
+    line-height: 26px;
     text-overflow: ellipsis;
     white-space: nowrap;
+    overflow: hidden;
     color: var(--vscode-settings-headerForeground);
   }
 }

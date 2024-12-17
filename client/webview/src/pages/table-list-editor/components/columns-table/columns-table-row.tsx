@@ -8,6 +8,7 @@ import Checkbox from '~/ui/checkbox/checkbox';
 import Icon from '~/ui/icon/icon';
 import Select from '~/ui/select/select';
 import Textfield from '~/ui/textfield/textfield';
+import Tooltip from '~/ui/tooltip/tooltip';
 import { state, useActions, useEditor } from '../../store';
 import styles from './columns-table.module.scss';
 
@@ -45,18 +46,23 @@ function ColumnsTableRow({ itemId: columnId, dragHandleListeners }: ColumnsTable
     <>
       <div className={styles.cell}>
         <button className={clsx(styles.button, styles.resize)} {...dragHandleListeners}>
-          <Icon id="gripper" />
+          <Icon id="gripper" size={14} />
         </button>
       </div>
       <div className={styles.cell}>
-        <Textfield
-          isRequired
-          value={column.name}
-          errorMessage={invalidNameMessage || duplicatedNameMessage}
-          onChange={(columnName) => {
-            updateColumn(columnId, columnName);
-          }}
-        />
+        <Tooltip
+          title={invalidNameMessage || duplicatedNameMessage}
+          variant="error"
+          position="bottom"
+        >
+          <Textfield
+            value={column.name}
+            isInvalid={!!(invalidNameMessage || duplicatedNameMessage)}
+            onChange={(columnName) => {
+              updateColumn(columnId, columnName);
+            }}
+          />
+        </Tooltip>
       </div>
       <div className={styles.cell}>
         <Select
@@ -99,7 +105,9 @@ function ColumnsTableRow({ itemId: columnId, dragHandleListeners }: ColumnsTable
       </div>
       <div className={styles.cell}>
         <ActionButton
+          className={styles.deleteButton}
           iconId="trash"
+          size={14}
           isDisabled={columns.length === 1}
           onClick={() => deleteColumn(columnId)}
         />

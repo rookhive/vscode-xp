@@ -2,10 +2,11 @@ import { useSnapshot } from 'valtio';
 import { useTranslations } from '~/hooks/use-translations';
 import HelperText from '~/ui/helper-text/helper-text';
 import Label from '~/ui/label/label';
+import SettingBox from '~/ui/setting-box/setting-box';
 import Textfield from '~/ui/textfield/textfield';
+import Tooltip from '~/ui/tooltip/tooltip';
 import { state, useActions, useEditor } from '../../store';
 import styles from '../general-settings/general-settings.module.scss';
-import SettingBox from '../setting-box/setting-box';
 import TTLSettings from '../ttl-settings/ttl-settings';
 
 function TableSizeSettings() {
@@ -22,28 +23,32 @@ function TableSizeSettings() {
         <SettingBox>
           <Label isRequired>{translations.MaxSize}</Label>
           <HelperText>{translations.MaxSizeDescription}</HelperText>
-          <Textfield
-            type="number"
-            min={0}
-            max={2 ** 31 - 1}
-            className={styles.numberTextfield}
-            value={maxSize}
-            errorMessage={errors.maxSize}
-            onChange={(value) => setMaxSize(value ? Number(value) : NaN)}
-          />
+          <Tooltip title={errors.maxSize} variant="error" position="bottom">
+            <Textfield
+              type="number"
+              min={0}
+              max={2 ** 31 - 1}
+              className={styles.numberTextfield}
+              value={maxSize}
+              isInvalid={!!errors.maxSize}
+              onChange={(value) => setMaxSize(value ? Number(value) : NaN)}
+            />
+          </Tooltip>
         </SettingBox>
         <SettingBox>
           <Label isRequired>{translations.TypicalSize}</Label>
           <HelperText>{translations.TypicalSizeDescription}</HelperText>
-          <Textfield
-            type="number"
-            min={0}
-            max={2 ** 31 - 1}
-            className={styles.numberTextfield}
-            value={typicalSize}
-            errorMessage={errors.typicalSize}
-            onChange={(value) => setTypicalSize(value ? Number(value) : NaN)}
-          />
+          <Tooltip title={errors.typicalSize} variant="error" position="bottom">
+            <Textfield
+              type="number"
+              min={0}
+              max={2 ** 31 - 1}
+              className={styles.numberTextfield}
+              value={typicalSize}
+              isInvalid={!!errors.typicalSize}
+              onChange={(value) => setTypicalSize(value ? Number(value) : NaN)}
+            />
+          </Tooltip>
         </SettingBox>
       </div>
       <TTLSettings />
