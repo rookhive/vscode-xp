@@ -14,13 +14,14 @@
     "dependencies": {
         "@vscode/webview-ui-toolkit": "^1.2.2",
         "guid-typescript": "^1.0.9",
-        "moment": "^2.29.4",
         "lru-cache": "^6.0.0",
+        "moment": "^2.29.4",
+        "prettier": "^3.4.2",
         "vscode-languageclient": "^7.0.0"
     },
     "devDependencies": {
-        "@vscode/l10n": "0.0.18",
         "@types/vscode": "^1.95.0",
+        "@vscode/l10n": "0.0.18",
         "@vscode/test-electron": "^2.3.0"
     }
 }

@@ -375,7 +375,7 @@ export class MetaInfo {
     this.EventDescriptions = [];
   }
 
-  public toString(): string {
+  public async toString(): Promise<string> {
     this.setUpdatedDate(new Date());
 
     // Если дата создания не задана, то будет текущая.
@@ -491,7 +491,7 @@ export class MetaInfo {
       }
     }
 
-    let yamlContent = YamlHelper.stringify(metaInfoObject);
+    let yamlContent = await YamlHelper.stringify(metaInfoObject);
     yamlContent = this.correctEventIds(yamlContent);
     return yamlContent;
   }
@@ -505,7 +505,7 @@ export class MetaInfo {
     }
 
     // Combine yaml file content
-    const yamlContent = this.toString();
+    const yamlContent = await this.toString();
     const yamlComments = this.getComments();
     let yamlFileContent: string;
     if (yamlComments) {

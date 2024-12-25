@@ -38,10 +38,8 @@ import { DuplicateTreeItemCommand } from './commands/duplicateTreeItemCommand';
 import { CreateMacroCommand } from './commands/createMacrosCommand';
 import { PackKbCommand } from './commands/packKbCommand';
 import { OpenTableCommand } from './commands/openTableCommand';
-import { LocalizationEditorViewProvider } from '../localization/localizationEditorViewProvider';
 import { CommandHelper } from '../../helpers/commandHelper';
 import { SortHelper } from '../../helpers/sortHelper';
-import { OpenTableDefaultsCommand } from './commands/openTableDefaultValuesCommand';
 import { Log } from '../../extension';
 
 export class ContentTreeProvider implements vscode.TreeDataProvider<ContentTreeBaseItem> {
@@ -307,16 +305,6 @@ export class ContentTreeProvider implements vscode.TreeDataProvider<ContentTreeB
           const unpackKbFilePath = fileInfos.fsPath;
           const command = new PackKbCommand(config, selectedPackage, unpackKbFilePath);
           await command.execute();
-        }
-      )
-    );
-
-    context.subscriptions.push(
-      vscode.commands.registerCommand(
-        ContentTreeProvider.showTableDefaultsCommand,
-        async (table: Table) => {
-          const command = new OpenTableDefaultsCommand(config, table);
-          command.execute();
         }
       )
     );
@@ -733,7 +721,6 @@ export class ContentTreeProvider implements vscode.TreeDataProvider<ContentTreeB
   public static readonly deleteItemCommand = 'xp.contentTree.deleteItemCommand';
   public static readonly duplicateTreeItemCommand = 'xp.contentTree.duplicateItemCommand';
   public static readonly renameItemCommand = 'xp.contentTree.renameItemCommand';
-  public static readonly showTableDefaultsCommand = 'xp.contentTree.showTableDefaultValuesCommand';
 
   private static selectedItem: RuleBaseItem | Table | Macros;
 

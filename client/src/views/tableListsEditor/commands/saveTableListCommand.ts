@@ -215,7 +215,7 @@ export class SaveTableListCommand implements TableListCommand {
     const sortedObject = JsHelper.sortRootKeysAccordingToSchema(tableObject, schema);
 
     // Сохраняем в YAML
-    const resultYamlTable = YamlHelper.tableStringify(sortedObject);
+    const resultYamlTable = await YamlHelper.tableStringify(sortedObject);
     await this._newTable.setRuleCode(resultYamlTable);
     return this._newTable.save();
   }

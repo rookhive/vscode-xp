@@ -1,10 +1,17 @@
 import * as jsYaml from 'js-yaml';
 import * as os from 'os';
 
+type Formatter = (text: string) => Promise<string>;
+
 export class YamlHelper {
-  public static configure(dumpOptions: jsYaml.DumpOptions, loadOptions?: jsYaml.LoadOptions): void {
+  public static configure(
+    dumpOptions: jsYaml.DumpOptions,
+    loadOptions?: jsYaml.LoadOptions,
+    formatter?: Formatter
+  ): void {
     this.dumpOptions = dumpOptions;
     this.loadOptions = loadOptions;
+    this.formatter = formatter;
   }
 
   /**
@@ -12,23 +19,23 @@ export class YamlHelper {
    * @param object объект для сериализации в строку
    * @returns
    */
-  public static localizationsStringify(object: any): string {
-    const localizationDumpOptions = Object.assign({}, this.dumpOptions);
+  public static localizationsStringify(object: any): Promise<string> {
+    const localizationDumpOptions = { ...this.dumpOptions };
     localizationDumpOptions.forceQuotes = true;
 
-    return jsYaml.dump(object, localizationDumpOptions);
+    return this.formatter(jsYaml.dump(object, localizationDumpOptions));
   }
 
-  public static tableStringify(object: any): string {
-    return jsYaml.dump(object, { ...this.dumpOptions, indent: 2 }).replace(/\n/g, os.EOL);
+  public static tableStringify(object: any): Promise<string> {
+    return this.formatter(jsYaml.dump(object, this.dumpOptions).replace(/\n/g, os.EOL));
   }
 
-  public static stringify(object: any, styles?: any): string {
+  public static stringify(object: any, styles?: any): Promise<string> {
     if (styles !== undefined) {
       this.dumpOptions.styles = styles;
     }
 
-    return jsYaml.dump(object, this.dumpOptions).replace(/\n/g, os.EOL);
+    return this.formatter(jsYaml.dump(object, this.dumpOptions).replace(/\n/g, os.EOL));
   }
 
   public static stringifyTable(object: any): string {
@@ -53,4 +60,5 @@ export class YamlHelper {
 
   private static dumpOptions: jsYaml.DumpOptions;
   private static loadOptions: jsYaml.LoadOptions;
+  private static formatter: Formatter;
 }

@@ -10,12 +10,12 @@ import { FileSystemHelper } from '../../helpers/fileSystemHelper';
 import { Attack } from '../../models/metaInfo/attack';
 
 suite('MetaInfo', () => {
-  test('Очищение поля Improvements', () => {
+  test('Очищение поля Improvements', async () => {
     const metaInfo = new MetaInfo();
     metaInfo.setImprovements(['first improvements', 'second improvements']);
     metaInfo.setImprovements([]);
 
-    const metainfoString = metaInfo.toString();
+    const metainfoString = await metaInfo.toString();
     assert.ok(metainfoString.includes('Improvements: []'));
   });
 

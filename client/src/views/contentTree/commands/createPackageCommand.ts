@@ -78,7 +78,7 @@ export class CreatePackageCommand extends ViewCommand {
       };
     }
 
-    const defaultMetainfoContent = YamlHelper.stringify(defaultMetainfoObject);
+    const defaultMetainfoContent = await YamlHelper.stringify(defaultMetainfoObject);
     await FileSystemHelper.writeContentFile(metainfoPath, defaultMetainfoContent);
 
     await ContentTreeProvider.refresh();

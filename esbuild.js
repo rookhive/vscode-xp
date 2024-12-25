@@ -15,7 +15,7 @@ const clientConfig = {
   format: 'cjs',
   entryPoints: ['./client/src/extension.ts'],
   outfile: `${clientOutDirectoryPath}/extension.js`,
-  external: ['vscode'],
+  external: ['vscode', 'prettier'],
   plugins: [
     clean({
       patterns: [clientOutDirectoryPath]

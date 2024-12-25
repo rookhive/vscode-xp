@@ -31,3 +31,7 @@
 !client/webview/out/**
 !client/webview/node_modules/monaco-editor/min/vs/**
 !client/webview/node_modules/@vscode/codicons/dist
+
+!client/node_modules/prettier/package.json
+!client/node_modules/prettier/*.{js,cjs,mjs}
+!client/node_modules/prettier/plugins/yaml.mjs

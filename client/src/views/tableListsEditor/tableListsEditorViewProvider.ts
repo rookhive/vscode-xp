@@ -15,24 +15,12 @@ import webviewHtmlProvider from '../webviewHtmlProvider';
 export class TableListsEditorViewProvider extends WebViewProviderBase {
   public static readonly viewId = 'TableListsEditorView';
 
-  constructor(
-    private readonly _templatePath: string,
-    private readonly _config: Configuration
-  ) {
+  constructor(private readonly _config: Configuration) {
     super();
   }
 
   public static init(config: Configuration): void {
-    const templateFilePath = path.join(
-      config.getExtensionPath(),
-      'client',
-      'templates',
-      'TableListEditor',
-      'html',
-      'TableListEditor.html'
-    );
-
-    const provider = new TableListsEditorViewProvider(templateFilePath, config);
+    const provider = new TableListsEditorViewProvider(config);
 
     config
       .getContext()

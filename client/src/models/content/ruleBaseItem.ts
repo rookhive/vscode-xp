@@ -396,7 +396,7 @@ export abstract class RuleBaseItem extends ContentTreeBaseItem {
     }
 
     // Сохраняем в файл
-    const localizationYamlContent = YamlHelper.localizationsStringify(localizationYamlObject);
+    const localizationYamlContent = await YamlHelper.localizationsStringify(localizationYamlObject);
     await FileSystemHelper.writeContentFileIfChanged(localizationFullPath, localizationYamlContent);
   }
 

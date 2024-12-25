@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as os from 'os';
+import { format } from 'prettier';
 
 import { workspace, ExtensionContext } from 'vscode';
 
@@ -35,7 +36,6 @@ import { Logger } from './logger';
 import { RetroCorrelationViewController } from './views/retroCorrelation/retroCorrelationViewProvider';
 import { XpHoverProvider } from './providers/xpHoverProvider';
 import { UserSettingsManager as UserSettingsManager } from './models/content/userSettingsManager';
-import { DefaultTLValuesEditorViewProvider } from './views/defaultTLValues/defaultTLValuesEditorViewProvider';
 import { LocalizationEditorViewProvider } from './views/localization/localizationEditorViewProvider';
 import { CommonCommands } from './models/command/commonCommands';
 import { ToolsManager } from './models/content/toolsManager';
@@ -122,12 +122,21 @@ export async function activate(context: ExtensionContext): Promise<void> {
         ? vscode.workspace.workspaceFolders[0].uri.fsPath
         : undefined;
 
-    YamlHelper.configure({
-      lineWidth: -1,
-      indent: 4,
-      noArrayIndent: true,
-      quotingType: "'"
-    });
+    YamlHelper.configure(
+      {
+        lineWidth: -1,
+        indent: 4,
+        noArrayIndent: true,
+        quotingType: "'"
+      },
+      undefined,
+      (text: string) =>
+        format(text, {
+          parser: 'yaml',
+          singleQuote: true,
+          tabWidth: 4
+        })
+    );
 
     ContentTreeProvider.init(config, rootPath);
     LocalizationEditorViewProvider.init(config);
@@ -141,18 +150,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
     InitKBRootCommand.init(config);
     RetroCorrelationViewController.init(config);
     CommonCommands.init(config);
-
-    const templateFilePath = path.join(
-      config.getExtensionPath(),
-      'client',
-      'templates',
-      'TableListEditor',
-      'html',
-      'TableListEditor.html'
-    );
-    context.subscriptions.push(
-      DefaultTLValuesEditorViewProvider.register(context, templateFilePath, config)
-    );
 
     siemCustomPackingTaskProvider = vscode.tasks.registerTaskProvider(
       XPPackingTaskProvider.Type,

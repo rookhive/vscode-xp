@@ -119,7 +119,7 @@ export class UnpackKbCommand extends ViewCommand {
         }
 
         // TODO: Убрать этот фикс, когда починят экспорт из PTKB
-        ContentHelper.fixTables(outputDirPath);
+        await ContentHelper.fixTables(outputDirPath);
 
         // Корректировка имени для пакетов без заданного системного имени, в таком случае оно является GUID.
         await this.correctPackageNameFromLocalizationFile(outputDirPath);
