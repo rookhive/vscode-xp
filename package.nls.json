@@ -45,6 +45,7 @@
 	"xp.xpConfig.kbtBaseDirectoryDescription": "Path of the folder with the [Knowledge Base Toolkit](https://github.com/vxcontrol/xp-kbt/releases)",
 	"xp.xpConfig.outputDirectoryPathDescription": "Path of the folder where temporary objects are saved. The folder is emptied automatically every time you start the extension.",
 	"xp.xpConfig.correlatorTimeoutDescription": "Max correlation time in seconds. If the time is exceeded, the correlation will be canceled.",
+	"xp.xpConfig.lspServerExecutablePathDescription": "Path of the LSP server executable",
 
 	"xp.xpConfig.originDescription": "Vendor information. Used to export objects to a KB file.",
 	"xp.xpConfig.origin.contentPrefixDescription": "Object vendor prefix. Must match ObjectId. By default, custom rules have the LOC prefix, and system rules have the PT prefix. If no prefix is specified, the rules you create will not have ObjectId either.",

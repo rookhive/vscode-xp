@@ -626,6 +626,11 @@
           "type": "string",
           "markdownDescription": "%xp.xpConfig.outputDirectoryPathDescription%"
         },
+				"xpConfig.lspServerExecutablePath": {
+					"type": "string",
+					"default": "",
+					"description": "%xp.xpConfig.lspServerExecutablePathDescription%"
+				},
         "xpConfig.correlatorTimeout": {
           "scope": "window",
           "type": "integer",

@@ -77,44 +77,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
     }
 
     // Конфигурирование LSP.
-    const serverModule = context.asAbsolutePath(path.join('server', 'out', 'server.js'));
-
-    const debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
-    const serverOptions: ServerOptions = {
-      run: { module: serverModule, transport: TransportKind.ipc },
-      debug: {
-        module: serverModule,
-        transport: TransportKind.ipc,
-        options: debugOptions
-      }
-    };
-
-    // Конфигурирование клиента для доступа к LSP.
-    const clientOptions: LanguageClientOptions = {
-      // Заменяем поддерживаемый формат на наш.
-      documentSelector: [
-        {
-          scheme: 'file',
-          language: 'xp'
-        },
-        {
-          scheme: 'file',
-          language: 'co'
-        },
-        {
-          scheme: 'file',
-          language: 'en'
-        }
-      ],
-      synchronize: {
-        // Notify the server about file changes to '.clientrc files contained in the workspace
-        fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
-      }
-    };
-
-    // Создаем клиент, запускаем его и сервер.
-    client = new LanguageClient('languageServer', 'Language Server', serverOptions, clientOptions);
-    client.start();
+    await configureLSPClient(client, context, config);
 
     const rootPath =
       vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
@@ -225,4 +188,102 @@ export async function deactivate(): Promise<void> | undefined {
   }
 
   return client.stop();
+}
+
+async function configureLSPClient(
+  client: LanguageClient,
+  context: vscode.ExtensionContext,
+  config: Configuration
+) {
+  const { lspServerExecutablePath } = config.getWorkspaceConfiguration();
+
+  if (lspServerExecutablePath) {
+    const command = lspServerExecutablePath;
+    const args: string[] = [];
+
+    const documentSelector = [
+      { scheme: 'file', language: 'xp' },
+      { scheme: 'file', language: 'en' },
+      { scheme: 'file', language: 'agr' },
+      { scheme: 'file', language: 'co' },
+      { scheme: 'file', language: 'flt' }
+    ];
+
+    const serverOptions: ServerOptions = {
+      command,
+      args,
+      options: {
+        cwd: __dirname
+      }
+    };
+
+    const clientOptions: LanguageClientOptions = {
+      documentSelector,
+      synchronize: {
+        configurationSection: config.getExtensionSettingsPrefix()
+      },
+      initializationOptions: {
+        locale: vscode.env.language
+      }
+    };
+
+    client = new LanguageClient(command, serverOptions, clientOptions);
+
+    return client
+      .start()
+      .then(() => {
+        const serverProcess = client['_serverProcess'];
+        if (serverProcess) {
+          const pid = serverProcess.pid;
+          vscode.window.showInformationMessage(
+            config.getMessage('LSPServer.ServerHasStarted', pid)
+          );
+        }
+      })
+      .catch((error) => {
+        vscode.window.showErrorMessage('Failed to start XPLang Language Server: ' + error.message);
+      });
+  }
+
+  /**
+   * Legacy LSP server
+   */
+  const serverModule = context.asAbsolutePath(path.join('server', 'out', 'server.js'));
+
+  const debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
+  const serverOptions: ServerOptions = {
+    run: { module: serverModule, transport: TransportKind.ipc },
+    debug: {
+      module: serverModule,
+      transport: TransportKind.ipc,
+      options: debugOptions
+    }
+  };
+
+  // Конфигурирование клиента для доступа к LSP.
+  const clientOptions: LanguageClientOptions = {
+    // Заменяем поддерживаемый формат на наш.
+    documentSelector: [
+      {
+        scheme: 'file',
+        language: 'xp'
+      },
+      {
+        scheme: 'file',
+        language: 'co'
+      },
+      {
+        scheme: 'file',
+        language: 'en'
+      }
+    ],
+    synchronize: {
+      // Notify the server about file changes to '.clientrc files contained in the workspace
+      fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
+    }
+  };
+
+  // Создаем клиент, запускаем его и сервер.
+  client = new LanguageClient('languageServer', 'Language Server', serverOptions, clientOptions);
+  client.start();
 }
